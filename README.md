@@ -1,5 +1,7 @@
 # NKP — Nutanix Kubernetes Platform Lab
 
+![NKP Training Course](NKP_Training_course.jpeg)
+
 > **Learn and teach NKP** — a hands-on, multi-VM lab course built on the
 > [iximious Labs](https://labs.iximious.com) Flexbox platform.
 
