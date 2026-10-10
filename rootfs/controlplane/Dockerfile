@@ -6,8 +6,15 @@
 #       kube-scheduler, kubelet). NOT pre-started — students run 'rke2 server'
 #       during Lesson 06.
 #
-# Build: see build.sh
-# Target image: nkp-controlplane.ext4
+# Build: see build.sh  (from rootfs/ root so downloads/ is in context)
+# Target image: ghcr.io/mercadoalex/nkp-controlplane:latest
+
+# ── downloads stage — pre-fetched files copied in (no curl inside QEMU) ──────
+FROM scratch AS downloads
+COPY downloads/rke2/install.sh                         /install.sh
+COPY downloads/rke2/rke2-images.linux-amd64.tar.zst   /rke2-images.linux-amd64.tar.zst
+COPY downloads/rke2/rke2-images-core.linux-amd64.tar.zst /rke2-images-core.linux-amd64.tar.zst
+COPY downloads/rke2/rke2-images-cilium.linux-amd64.tar.zst /rke2-images-cilium.linux-amd64.tar.zst
 
 # Pin to exact minor — never use the floating rockylinux:9 tag
 FROM rockylinux:9.7
@@ -50,26 +57,23 @@ RUN curl -fsSL "https://dl.k8s.io/release/v${KUBECTL_VERSION}/bin/linux/amd64/ku
     && chmod +x /usr/local/bin/kubectl
 
 # ── RKE2 server install ───────────────────────────────────────────────────────
-# Installs the RKE2 binary, systemd units, and default config.
-# Does NOT start the service — students do that in the lab.
-RUN curl -sfL https://get.rke2.io | \
-    INSTALL_RKE2_VERSION="${RKE2_VERSION}" \
+# Uses pre-downloaded installer from downloads/rke2/install.sh (COPY is faster
+# than curl inside QEMU emulation on Apple Silicon).
+# To refresh: curl -fsSL https://get.rke2.io -o downloads/rke2/install.sh
+COPY --from=downloads /install.sh /tmp/rke2-install.sh
+RUN INSTALL_RKE2_VERSION="${RKE2_VERSION}" \
     INSTALL_RKE2_TYPE="server" \
-    sh -
+    sh /tmp/rke2-install.sh && rm /tmp/rke2-install.sh
 
-# ── pre-pull RKE2 container images (airgap prep) ─────────────────────────────
-# Pull the RKE2 airgap image bundle so the cluster starts without internet.
-# The bundle is placed where RKE2 expects it: /var/lib/rancher/rke2/agent/images/
-RUN mkdir -p /var/lib/rancher/rke2/agent/images/ \
-    && curl -fsSL \
-       "https://github.com/rancher/rke2/releases/download/${RKE2_VERSION}/rke2-images.linux-amd64.tar.zst" \
-       -o /var/lib/rancher/rke2/agent/images/rke2-images.linux-amd64.tar.zst \
-    && curl -fsSL \
-       "https://github.com/rancher/rke2/releases/download/${RKE2_VERSION}/rke2-images-core.linux-amd64.tar.zst" \
-       -o /var/lib/rancher/rke2/agent/images/rke2-images-core.linux-amd64.tar.zst \
-    && curl -fsSL \
-       "https://github.com/rancher/rke2/releases/download/${RKE2_VERSION}/rke2-images-cilium.linux-amd64.tar.zst" \
-       -o /var/lib/rancher/rke2/agent/images/rke2-images-cilium.linux-amd64.tar.zst
+# ── RKE2 airgap image bundles ────────────────────────────────────────────────
+# Pre-downloaded to downloads/rke2/ — copied in directly (no in-build curl).
+# To refresh: see downloads/rke2/ directory or rootfs/README.md
+RUN mkdir -p /var/lib/rancher/rke2/agent/images/
+COPY --from=downloads \
+    /rke2-images.linux-amd64.tar.zst \
+    /rke2-images-core.linux-amd64.tar.zst \
+    /rke2-images-cilium.linux-amd64.tar.zst \
+    /var/lib/rancher/rke2/agent/images/
 
 # ── RKE2 server config ────────────────────────────────────────────────────────
 # Writes the default server config. The token is set at runtime by the lab

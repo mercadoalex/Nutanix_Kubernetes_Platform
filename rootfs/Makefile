@@ -39,31 +39,35 @@ bootstrap:
 
 controlplane:
 	@echo "==> Building + pushing nkp-controlplane (vm2)..."
+	@echo "    (build context is rootfs/ root — downloads/rke2/ must exist)"
 	docker buildx build \
 		--platform $(PLATFORM) \
 		--push \
 		-t $(CONTROLPLANE_IMAGE):$(RELEASE) \
 		-t $(CONTROLPLANE_IMAGE):latest \
 		--progress=plain \
-		controlplane/
+		-f controlplane/Dockerfile \
+		.
 	@echo "✓ $(CONTROLPLANE_IMAGE):latest"
 
 worker:
 	@echo "==> Building + pushing nkp-worker (vm3–5)..."
+	@echo "    (build context is rootfs/ root — downloads/rke2/ must exist)"
 	docker buildx build \
 		--platform $(PLATFORM) \
 		--push \
 		-t $(WORKER_IMAGE):$(RELEASE) \
 		-t $(WORKER_IMAGE):latest \
 		--progress=plain \
-		worker/
+		-f worker/Dockerfile \
+		.
 	@echo "✓ $(WORKER_IMAGE):latest"
 
 build-all:
 	@echo "==> Building all images (local only, no push)..."
 	docker buildx build --platform $(PLATFORM) --load -t $(BOOTSTRAP_IMAGE):dev    bootstrap/
-	docker buildx build --platform $(PLATFORM) --load -t $(CONTROLPLANE_IMAGE):dev controlplane/
-	docker buildx build --platform $(PLATFORM) --load -t $(WORKER_IMAGE):dev       worker/
+	docker buildx build --platform $(PLATFORM) --load -t $(CONTROLPLANE_IMAGE):dev -f controlplane/Dockerfile .
+	docker buildx build --platform $(PLATFORM) --load -t $(WORKER_IMAGE):dev       -f worker/Dockerfile .
 
 clean:
 	docker rmi $(BOOTSTRAP_IMAGE):latest    $(BOOTSTRAP_IMAGE):dev    2>/dev/null || true

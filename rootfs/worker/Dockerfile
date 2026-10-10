@@ -5,8 +5,15 @@
 # Role: Runs RKE2 agent (kubelet + kube-proxy). Joins the RKE2 server on vm2.
 #       NOT pre-started — students run 'rke2 agent' during Lesson 06.
 #
-# Build: see build.sh  (single image used for all three worker VMs)
-# Target image: nkp-worker.ext4
+# Build: see build.sh  (from rootfs/ root so downloads/ is in context)
+# Target image: ghcr.io/mercadoalex/nkp-worker:latest
+
+# ── downloads stage — pre-fetched files copied in (no curl inside QEMU) ──────
+FROM scratch AS downloads
+COPY downloads/rke2/install.sh                              /install.sh
+COPY downloads/rke2/rke2-images.linux-amd64.tar.zst        /rke2-images.linux-amd64.tar.zst
+COPY downloads/rke2/rke2-images-core.linux-amd64.tar.zst   /rke2-images-core.linux-amd64.tar.zst
+COPY downloads/rke2/rke2-images-cilium.linux-amd64.tar.zst /rke2-images-cilium.linux-amd64.tar.zst
 
 FROM rockylinux:9.7
 
@@ -41,22 +48,18 @@ RUN dnf install -y --setopt=install_weak_deps=False \
 RUN systemctl enable iscsid
 
 # ── RKE2 agent install ────────────────────────────────────────────────────────
-RUN curl -sfL https://get.rke2.io | \
-    INSTALL_RKE2_VERSION="${RKE2_VERSION}" \
+COPY --from=downloads /install.sh /tmp/rke2-install.sh
+RUN INSTALL_RKE2_VERSION="${RKE2_VERSION}" \
     INSTALL_RKE2_TYPE="agent" \
-    sh -
+    sh /tmp/rke2-install.sh && rm /tmp/rke2-install.sh
 
-# ── pre-pull RKE2 agent container images (airgap prep) ───────────────────────
-RUN mkdir -p /var/lib/rancher/rke2/agent/images/ \
-    && curl -fsSL \
-       "https://github.com/rancher/rke2/releases/download/${RKE2_VERSION}/rke2-images.linux-amd64.tar.zst" \
-       -o /var/lib/rancher/rke2/agent/images/rke2-images.linux-amd64.tar.zst \
-    && curl -fsSL \
-       "https://github.com/rancher/rke2/releases/download/${RKE2_VERSION}/rke2-images-core.linux-amd64.tar.zst" \
-       -o /var/lib/rancher/rke2/agent/images/rke2-images-core.linux-amd64.tar.zst \
-    && curl -fsSL \
-       "https://github.com/rancher/rke2/releases/download/${RKE2_VERSION}/rke2-images-cilium.linux-amd64.tar.zst" \
-       -o /var/lib/rancher/rke2/agent/images/rke2-images-cilium.linux-amd64.tar.zst
+# ── RKE2 airgap image bundles ────────────────────────────────────────────────
+RUN mkdir -p /var/lib/rancher/rke2/agent/images/
+COPY --from=downloads \
+    /rke2-images.linux-amd64.tar.zst \
+    /rke2-images-core.linux-amd64.tar.zst \
+    /rke2-images-cilium.linux-amd64.tar.zst \
+    /var/lib/rancher/rke2/agent/images/
 
 # ── RKE2 agent config ─────────────────────────────────────────────────────────
 # server URL and token are set at runtime by the student (or lab setup script)
