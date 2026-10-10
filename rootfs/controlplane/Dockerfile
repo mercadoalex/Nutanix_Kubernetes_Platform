@@ -91,6 +91,6 @@ RUN echo 'export KUBECONFIG=/etc/rancher/rke2/rke2.yaml' >> /etc/bashrc \
 
 # ── lab files ─────────────────────────────────────────────────────────────────
 RUN mkdir -p /home/laborant/labs
-COPY --chown=1000:1000 labs/ /home/laborant/labs/
+COPY --chown=1000:1000 controlplane/labs/ /home/laborant/labs/
 
 WORKDIR /root

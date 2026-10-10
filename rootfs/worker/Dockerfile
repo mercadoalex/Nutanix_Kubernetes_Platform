@@ -73,6 +73,6 @@ RUN echo 'export PATH=$PATH:/var/lib/rancher/rke2/bin' >> /etc/bashrc \
 
 # ── lab files ─────────────────────────────────────────────────────────────────
 RUN mkdir -p /home/laborant/labs
-COPY --chown=1000:1000 labs/ /home/laborant/labs/
+COPY --chown=1000:1000 worker/labs/ /home/laborant/labs/
 
 WORKDIR /root
