@@ -17,6 +17,7 @@ ARG KUBECTL_VERSION=1.34.3
 ARG HELM_VERSION=3.17.3
 ARG FLUX_VERSION=2.5.1
 ARG KIND_VERSION=0.27.0
+ARG K9S_VERSION=0.32.5
 # Docker CE is installed from the upstream repo — version matches iximious catalog
 ARG DOCKER_VERSION=5:29.0.3-1~ubuntu.24.04~noble
 
@@ -78,12 +79,23 @@ RUN curl -fsSL "https://kind.sigs.k8s.io/dl/v${KIND_VERSION}/kind-linux-amd64" \
         -o /usr/local/bin/kind \
     && chmod +x /usr/local/bin/kind
 
+# ── k9s (TUI cluster explorer) ────────────────────────────────────────────────
+RUN curl -fsSL "https://github.com/derailed/k9s/releases/download/v${K9S_VERSION}/k9s_Linux_amd64.tar.gz" \
+    | tar xz -C /usr/local/bin k9s
+
 # ── nkp CLI ──────────────────────────────────────────────────────────────────
-# The nkp binary must be downloaded from the Nutanix Support Portal (requires login).
-# Place the extracted binary at rootfs/bootstrap/nkp before building.
-# See rootfs/README.md for instructions.
-COPY --chown=root:root nkp /usr/local/bin/nkp
-RUN chmod +x /usr/local/bin/nkp
+# The nkp v2.17.x standalone binary is publicly available from the D2iQ CDN.
+# NKP is the renamed D2iQ DKP product; this URL requires no login or portal account.
+#
+# The binary is downloaded directly during the Docker build — no pre-placement needed.
+# If you prefer to supply it manually (e.g. for a custom/patched build), place the
+# binary at rootfs/bootstrap/nkp and comment out the RUN line below, uncommenting
+# the COPY line instead.
+RUN curl -fsSL \
+        "https://downloads.d2iq.com/dkp/v${NKP_VERSION}/nkp_v${NKP_VERSION}_linux_amd64.tar.gz" \
+        | tar xz -C /usr/local/bin/ nkp \
+    && chmod +x /usr/local/bin/nkp
+# COPY --chown=root:root nkp /usr/local/bin/nkp
 
 # ── shell setup ───────────────────────────────────────────────────────────────
 RUN echo 'source <(kubectl completion bash)' >> /etc/bash.bashrc \

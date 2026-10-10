@@ -1,0 +1,52 @@
+# NKP Demo — gitignore
+
+# ── binaries & archives ───────────────────────────────────────────────────────
+# nkp / dkp CLI binaries (large, redistributed from D2iQ/Nutanix CDN)
+rootfs/bootstrap/nkp
+downloads/*.tar.gz
+downloads/*.exe
+
+# Nutanix / OS images (large binary blobs — download separately)
+downloads/*.iso
+downloads/*.qcow2
+downloads/*.img
+
+# ── build output ──────────────────────────────────────────────────────────────
+# compiled rootfs ext4 images
+dist/
+*.ext4
+*.ext4.zst
+
+# Docker build cache artefacts
+.buildx-cache*/
+
+# ── secrets & credentials ─────────────────────────────────────────────────────
+*.b64
+*.pem
+*.key
+kubeconfig
+*.kubeconfig
+.env
+.env.*
+
+# ── macOS ─────────────────────────────────────────────────────────────────────
+.DS_Store
+**/.DS_Store
+
+# ── editors ───────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ── Python (build scripts) ────────────────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+
+# ── temporary files ───────────────────────────────────────────────────────────
+/tmp/
+*.tmp
+*.log

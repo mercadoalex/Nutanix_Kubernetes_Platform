@@ -3,9 +3,11 @@
 # Builds nkp-bootstrap.ext4 — the rootfs image for vm1 (bootstrap / operator workstation)
 #
 # Prerequisites:
-#   - Docker running on the build host
-#   - nkp binary placed at rootfs/bootstrap/nkp (downloaded from portal.nutanix.com)
+#   - Docker running on the build host (internet access required — nkp is downloaded automatically)
 #   - Run from the rootfs/bootstrap/ directory, or use the top-level Makefile
+#
+# The nkp binary is downloaded automatically during docker build from the D2iQ CDN.
+# No portal account or pre-placed binary required.
 #
 # Output: ../../dist/nkp-bootstrap.ext4
 
@@ -19,18 +21,6 @@ OUTPUT="${DIST_DIR}/nkp-bootstrap.ext4"
 EXT4_SIZE_MB=8192
 
 cd "${SCRIPT_DIR}"
-
-# ── preflight ─────────────────────────────────────────────────────────────────
-if [[ ! -f "nkp" ]]; then
-    echo ""
-    echo "ERROR: nkp binary not found at rootfs/bootstrap/nkp"
-    echo ""
-    echo "  1. Go to https://portal.nutanix.com/page/downloads?product=nkp"
-    echo "  2. Download 'NKP for Linux' (the CLI tarball)"
-    echo "  3. Extract: tar xz -C rootfs/bootstrap/ --strip-components=1 -f nkp-*.tar.gz nkp"
-    echo ""
-    exit 1
-fi
 
 mkdir -p "${DIST_DIR}"
 mkdir -p labs  # populated by lesson content; empty is fine for initial build

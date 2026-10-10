@@ -117,6 +117,7 @@ nkp_demo/
 ├── AGENTS.md                        # This file — Bob project context
 ├── lessons/
 │   ├── 00-concepts/                 # READING: NKP architecture, cluster roles, CAPI, editions
+│   ├── 00b-community-edition/       # WALKTHROUGH: Install CE 2.1 on bare metal, LCM upgrade to AOS 7.3
 │   ├── 01-os-image/                 # TIER 1: Download & upload Rocky image
 │   ├── 02-prism-bootstrap/          # TIER 1: nkp bootstrap walkthrough
 │   ├── 03-cluster-create/           # TIER 1: nkp create cluster (AHV demo)
@@ -128,7 +129,8 @@ nkp_demo/
 │   ├── 09-gitops-flux/              # TIER 3: full GitOps loop
 │   ├── 10-rbac-policy/              # TIER 3: ClusterRoles, OPA/Gatekeeper
 │   ├── 11-monitoring/               # TIER 3: Prometheus + Grafana across nodes
-│   └── 12-node-failure/             # TIER 3: kill vm4, watch rescheduling
+│   ├── 12-node-failure/             # TIER 3: kill vm4, watch rescheduling
+│   └── 13-gpu/                      # MIXED: AHV GPU passthrough (walkthrough) + GPU Operator + time-slicing + MIG + lab sim
 ├── rootfs/                          # rootfs image build tooling
 │   ├── bootstrap/                   # nkp-bootstrap.ext4 build (vm1)
 │   ├── controlplane/                # nkp-controlplane.ext4 build (vm2)
@@ -175,6 +177,8 @@ Each VM boots its own purpose-built rootfs. The cluster is **not** pre-started �
 - **Lab node OS:** Rocky Linux 9.7 (custom-built rootfs — **not** the iximious catalog image)
 - **NKP CLI:** `nkp` v2.17 binary
 - **Container runtime:** containerd 2.x (via RKE2, on node VMs); Docker 29 (on vm1 bootstrap, for kind)
+- **Local container registry (lab):** Harbor (avoids Docker Hub rate limits — 100 pulls/6h anon, 200 pulls/6h free account)
+- **Operator tooling:** `k9s` (TUI cluster explorer), `kubectl`, `nkp`, `helm`, `flux`
 - **CNI:** Cilium (NKP default) or Calico
 - **Ingress:** Traefik (NKP default Layer 7 ingress controller)
 - **Load balancer (lab substitute):** MetalLB L2 (replaces Nutanix CCM; confirmed NKP default for on-prem)
@@ -235,6 +239,26 @@ Source: [`nkp_compatibility.json`](https://github.com/nutanixdev/nkp-quickstart/
 > Each NKP release supports **two K8s minor versions** — current and one version back.
 > Always match the NKP CLI version to the OS image. Mixing versions causes bootstrap failures.
 
+## Nutanix Community Edition (CE) — Home Lab Platform
+
+CE is the free Nutanix stack used in home labs. Key facts for this course:
+
+| Item | Detail |
+|---|---|
+| CE version | **2.1** (released 2024-08-19) |
+| Bundled AOS | 6.8.1 |
+| Installer | ISO → USB via **Rufus v3.21 exactly** (other versions fail) |
+| ISO URL | `https://download.nutanix.com/ce/2024.08.19/phoenix.x86_64-fnd_5.6.1_patch-aos_6.8.1_ga.iso` |
+| Upgrade path from old CE | ❌ None — fresh install only |
+| LCM upgrades | ✅ Works directly (same build as commercial AOS) |
+| Prism Central | ✅ Compatible with commercial PC build |
+| NKP 2.17 readiness | ❌ Out of box — AOS 6.8.1 is below the 7.3 minimum. **Must LCM-upgrade to AOS 7.3 before installing NKP.** |
+
+**Post-install upgrade sequence required for NKP 2.17:**
+```
+CE 2.1 (AOS 6.8.1)  →  LCM: AHV upgrade  →  LCM: AOS 7.3  →  Deploy PC pc.7.3  →  NKP ready
+```
+
 ## Jump Host Specification (from nkp-quickstart)
 
 The nkp-quickstart reference architecture uses a dedicated **jump host** VM for running the NKP CLI. This maps directly to vm1 in the Flexbox lab topology.
@@ -289,3 +313,71 @@ Critical env vars (from [`nkp-env`](https://github.com/nutanixdev/nkp-quickstart
 | `NUTANIX_STORAGE_CONTAINER_NAME` | `SelfServiceContainer` | Prism storage container for CSI |
 | `REGISTRY_MIRROR_URL` | `registry-1.docker.io` | Avoids Docker Hub rate limiting on HPOC |
 | `NKP_BUNDLE` | `./container-images/kommander-image-bundle-v2.17.1.tar,...` | Air-gap bundle path |
+
+## Docker Hub Rate Limits — Why Harbor Matters
+
+NKP cluster creation pulls a large number of container images. Docker Hub enforces:
+
+| Account type | Pull limit |
+|---|---|
+| Anonymous | 100 pulls / 6 hours |
+| Free (authenticated) | 200 pulls / 6 hours |
+| Pro / Team | Unlimited |
+
+During iterative lab deployments (repeated `nkp create cluster` / destroy cycles), anonymous pulls are exhausted within one deployment. The reference solution from Jonas Högman's series is a **local Harbor registry** that proxies Docker Hub, caching images locally. The `REGISTRY_MIRROR_URL` env var in `nkp-env` points `nkp create cluster` at this local mirror.
+
+In the Flexbox lab, Harbor is pre-loaded into the `nkp-bootstrap.ext4` rootfs or run as a separate service VM. All container images used in lessons must be pre-pulled into Harbor at rootfs build time.
+
+## NKP POC / Trial License
+
+NKP Pro/Ultimate features (Kommander multi-cluster, Attached Clusters, etc.) require a license. For lab use:
+
+1. Log in to [portal.nutanix.com](https://portal.nutanix.com)
+2. Hamburger menu → **Licenses**
+3. → **Non-Production Licenses** → **Request POC License**
+4. Select **NKP Ultimate** → follow on-screen steps
+5. Apply in Kommander: **Licensing** → remove existing → **+ Activate License** → enter your key
+6. Add your cluster name (must match `CLUSTER_NAME` exactly — used for license key binding)
+
+A **30-day POC license** from the support portal is sufficient to explore the full NKP Ultimate feature set.
+
+Jeroen Tielen also notes: *"Enable the 90 day ultimate trial and you can play with all the cool features. That would be enough to learn the whole stack and get certified."*
+
+## k9s — Cluster Explorer
+
+`k9s` is a terminal UI for Kubernetes. It is a critical lab tool — used to watch pods being created during `nkp create cluster` in real time.
+
+```bash
+# Install on vm1 (Ubuntu)
+curl -fsSL https://github.com/derailed/k9s/releases/latest/download/k9s_Linux_amd64.tar.gz \
+  | tar xz -C /usr/local/bin k9s
+
+# Use during cluster deployment to watch what's happening
+k9s --kubeconfig="/home/laborant/labs/mgmt.kubeconfig"
+```
+
+Add `k9s` to the bootstrap rootfs (add to [`rootfs/bootstrap/Dockerfile`](rootfs/bootstrap/Dockerfile) ARG list and install step).
+
+## Workload Cluster — UI Path (Kommander)
+
+Jonas Högman's series documents creating Workload Clusters via the Kommander dashboard (alternative to the `nkp` CLI):
+
+1. Kommander Dashboard → **Clusters** → **+ Add Cluster** → **Create New Cluster**
+2. Set workspace, cluster name, SSH public key
+3. **Control Plane pool:** Prism Central project, AOS cluster, OS image, VIP, replica count (≥3 for production)
+4. **Worker pool:** same options + enable **worker node autoscaling**
+5. **Storage:** select Prism storage container
+6. **Networking:** pod CIDR, service CIDR, load balancer IP range
+7. **Image Registry:** Harbor endpoint + CA cert (if local mirror used)
+8. Click **Create** → watch VMs appear in Prism Central → wait for cluster Active state
+9. Actions → **Download kubeconfig** → transfer to bastion
+
+## Community Resources & Reference Series
+
+| Resource | URL | What it covers |
+|---|---|---|
+| Nutanix Cloud Bible — NKP | [link](https://www.nutanixbible.com/18a-book-of-cloud-native-services-nutanix-kubernetes-platform.html) | Architecture overview (NKP 2.12) |
+| nkp-quickstart | [github.com/nutanixdev/nkp-quickstart](https://github.com/nutanixdev/nkp-quickstart) | Automated deploy script, env vars, compatibility JSON |
+| Jonas Högman — NKP series (5 posts) | [jonashogman.com](https://jonashogman.com/nkp-post-1-preparing-the-setup-environment/) | Full real-world deployment: Harbor, bootstrap, Kommander, IdP, Workload Cluster |
+| Jeroen Tielen — NX-3060-G4 lab | [jeroentielen.nl](https://www.jeroentielen.nl/trying-to-get-my-oldest-to-the-latest-and-running-the-latest-%F0%9F%AB%A3/) | CE on legacy hardware, full stack upgrade walkthrough |
+| Nutanix Support Portal | [portal.nutanix.com](https://portal.nutanix.com) | NKP downloads, compatibility matrix, POC licenses |
