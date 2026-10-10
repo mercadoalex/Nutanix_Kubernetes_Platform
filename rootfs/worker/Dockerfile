@@ -64,7 +64,7 @@ COPY --from=downloads \
 # ── RKE2 agent config ─────────────────────────────────────────────────────────
 # server URL and token are set at runtime by the student (or lab setup script)
 RUN mkdir -p /etc/rancher/rke2
-COPY config-agent.yaml /etc/rancher/rke2/config.yaml
+COPY worker/config-agent.yaml /etc/rancher/rke2/config.yaml
 
 # ── shell setup ───────────────────────────────────────────────────────────────
 RUN echo 'export PATH=$PATH:/var/lib/rancher/rke2/bin' >> /etc/bashrc \

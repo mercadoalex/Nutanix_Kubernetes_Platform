@@ -79,7 +79,7 @@ COPY --from=downloads \
 # Writes the default server config. The token is set at runtime by the lab
 # setup script (or manually by the student) so VMs can join the cluster.
 RUN mkdir -p /etc/rancher/rke2
-COPY config-server.yaml /etc/rancher/rke2/config.yaml
+COPY controlplane/config-server.yaml /etc/rancher/rke2/config.yaml
 
 # ── shell setup ───────────────────────────────────────────────────────────────
 # RKE2 writes its kubeconfig to /etc/rancher/rke2/rke2.yaml after first start.
