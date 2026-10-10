@@ -147,5 +147,5 @@ Published on [iximious Labs](https://labs.iximious.com)
 ---
 
 <p align="center">
-  Built with ❤️ for the Nutanix and Kubernetes community
+  Built with ❤️ by Alex for the Nutanix and Kubernetes community
 </p>
