@@ -21,21 +21,14 @@ FROM rockylinux/rockylinux:9.6
 ARG RKE2_VERSION=v1.34.3+rke2r1
 
 # ── base packages ─────────────────────────────────────────────────────────────
+RUN dnf install -y epel-release || true
 RUN dnf install -y --setopt=install_weak_deps=False \
-        curl \
-        git \
-        tmux \
-        jq \
-        bash-completion \
-        vim-minimal \
-        less \
-        iproute \
-        iputils \
-        bind-utils \
-        nmap-ncat \
-        socat \
-        iptables \
-        nftables \
+        curl git tmux jq bash-completion \
+        vim-minimal less iproute iputils \
+    && dnf install -y --setopt=install_weak_deps=False \
+        bind-utils nmap-ncat socat \
+        iptables nftables \
+    && dnf install -y --setopt=install_weak_deps=False \
         iscsi-initiator-utils \
         container-selinux \
         libseccomp \
