@@ -41,7 +41,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         netcat-openbsd \
         socat \
         openssh-client \
+        python3 \
+        python3-pip \
+        sshpass \
     && rm -rf /var/lib/apt/lists/*
+
+# ── Ansible ───────────────────────────────────────────────────────────────────
+RUN pip3 install --no-cache-dir --break-system-packages ansible
 
 # ── Docker CE (needed to run kind bootstrap cluster) ─────────────────────────
 RUN install -m 0755 -d /etc/apt/keyrings \

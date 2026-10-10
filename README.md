@@ -86,6 +86,7 @@ ghcr.io/mercadoalex/nkp-worker:latest
 | 11 | Monitoring and Observability | Tier 3 | 5 |
 | 12 | Node Failure and Recovery | Tier 3 | 5 |
 | [13](lessons/13-gpu/) | GPU on NKP | Tier 3 | 5 |
+| [14](lessons/14-ansible/) | Node Operations with Ansible | Tier 3 | 5 |
 
 ---
 
