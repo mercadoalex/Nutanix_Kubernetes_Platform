@@ -35,7 +35,10 @@ RUN dnf install -y --setopt=install_weak_deps=False \
     && dnf clean all
 
 # ── enable iscsid (required by Longhorn) ──────────────────────────────────────
-RUN systemctl enable iscsid
+# systemctl doesn't work inside a Docker build — create the symlink directly
+RUN mkdir -p /etc/systemd/system/multi-user.target.wants && \
+    ln -sf /usr/lib/systemd/system/iscsid.service \
+        /etc/systemd/system/multi-user.target.wants/iscsid.service
 
 # ── RKE2 agent install ────────────────────────────────────────────────────────
 COPY --from=downloads /install.sh /tmp/rke2-install.sh
