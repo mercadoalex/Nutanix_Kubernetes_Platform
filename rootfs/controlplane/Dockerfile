@@ -1,0 +1,92 @@
+# rootfs/controlplane/Dockerfile
+# vm2 — NKP Management Cluster control plane node
+#
+# Base: Rocky Linux 9.7 (pinned — matches NKP 2.17 production node OS exactly)
+# Role: Runs RKE2 server (kube-apiserver, etcd, kube-controller-manager,
+#       kube-scheduler, kubelet). NOT pre-started — students run 'rke2 server'
+#       during Lesson 06.
+#
+# Build: see build.sh
+# Target image: nkp-controlplane.ext4
+
+# Pin to exact minor — never use the floating rockylinux:9 tag
+FROM rockylinux:9.7
+
+# ── versions (pinned to NKP 2.17 / K8s 1.34.x) ───────────────────────────────
+ARG RKE2_VERSION=v1.34.3+rke2r1
+# kubectl is installed separately so students can use it before RKE2 is up
+ARG KUBECTL_VERSION=1.34.3
+
+# ── base packages ─────────────────────────────────────────────────────────────
+RUN dnf install -y --setopt=install_weak_deps=False \
+        curl \
+        git \
+        tmux \
+        jq \
+        bash-completion \
+        vim \
+        less \
+        iproute \
+        iputils \
+        bind-utils \
+        nc \
+        socat \
+        iptables \
+        nftables \
+        # Longhorn dependency — open-iscsi
+        iscsi-initiator-utils \
+        # RKE2 / containerd dependencies
+        container-selinux \
+        libseccomp \
+        nfs-utils \
+    && dnf clean all
+
+# ── enable iscsid (required by Longhorn) ──────────────────────────────────────
+RUN systemctl enable iscsid
+
+# ── kubectl (standalone, for pre-flight use before RKE2 is running) ──────────
+RUN curl -fsSL "https://dl.k8s.io/release/v${KUBECTL_VERSION}/bin/linux/amd64/kubectl" \
+        -o /usr/local/bin/kubectl \
+    && chmod +x /usr/local/bin/kubectl
+
+# ── RKE2 server install ───────────────────────────────────────────────────────
+# Installs the RKE2 binary, systemd units, and default config.
+# Does NOT start the service — students do that in the lab.
+RUN curl -sfL https://get.rke2.io | \
+    INSTALL_RKE2_VERSION="${RKE2_VERSION}" \
+    INSTALL_RKE2_TYPE="server" \
+    sh -
+
+# ── pre-pull RKE2 container images (airgap prep) ─────────────────────────────
+# Pull the RKE2 airgap image bundle so the cluster starts without internet.
+# The bundle is placed where RKE2 expects it: /var/lib/rancher/rke2/agent/images/
+RUN mkdir -p /var/lib/rancher/rke2/agent/images/ \
+    && curl -fsSL \
+       "https://github.com/rancher/rke2/releases/download/${RKE2_VERSION}/rke2-images.linux-amd64.tar.zst" \
+       -o /var/lib/rancher/rke2/agent/images/rke2-images.linux-amd64.tar.zst \
+    && curl -fsSL \
+       "https://github.com/rancher/rke2/releases/download/${RKE2_VERSION}/rke2-images-core.linux-amd64.tar.zst" \
+       -o /var/lib/rancher/rke2/agent/images/rke2-images-core.linux-amd64.tar.zst \
+    && curl -fsSL \
+       "https://github.com/rancher/rke2/releases/download/${RKE2_VERSION}/rke2-images-cilium.linux-amd64.tar.zst" \
+       -o /var/lib/rancher/rke2/agent/images/rke2-images-cilium.linux-amd64.tar.zst
+
+# ── RKE2 server config ────────────────────────────────────────────────────────
+# Writes the default server config. The token is set at runtime by the lab
+# setup script (or manually by the student) so VMs can join the cluster.
+RUN mkdir -p /etc/rancher/rke2
+COPY config-server.yaml /etc/rancher/rke2/config.yaml
+
+# ── shell setup ───────────────────────────────────────────────────────────────
+# RKE2 writes its kubeconfig to /etc/rancher/rke2/rke2.yaml after first start.
+# Add a convenience symlink so kubectl picks it up automatically.
+RUN echo 'export KUBECONFIG=/etc/rancher/rke2/rke2.yaml' >> /etc/bashrc \
+    && echo 'export PATH=$PATH:/var/lib/rancher/rke2/bin' >> /etc/bashrc \
+    && echo 'source <(kubectl completion bash)' >> /etc/bashrc \
+    && echo 'alias k=kubectl' >> /etc/bashrc
+
+# ── lab files ─────────────────────────────────────────────────────────────────
+RUN mkdir -p /home/laborant/labs
+COPY --chown=1000:1000 labs/ /home/laborant/labs/
+
+WORKDIR /root

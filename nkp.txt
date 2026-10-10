@@ -1,0 +1,28 @@
+The NKP Rocky Linux image is available for free download from the Nutanix Support Portal (my.nutanix.com).  You just need a Nutanix account (free to create).
+
+How to get it
+Go to my.nutanix.com → Downloads
+Switch the dropdown to "NKP Operating System Images" (it was moved to its own section in NKP 2.16+)
+Download the Rocky Linux 9.7 – CIS Hardened for AHV image (.qcow2 file) 
+The current image name follows this pattern:
+
+nkp-rocky-9.7-release-cis-1.34.3-20260504011927.qcow2
+
+What's in the image
+It's not a stock Rocky Linux ISO — it's a pre-built, CIS Level 1 hardened cloud image with everything pre-installed for NKP nodes:
+
+kubeadm, kubelet, containerd
+CNI/CSI prerequisites
+All NKP-specific configurations
+After downloading
+Upload it to Prism Central → Images → Add Image (select "Disk" as the image type).  Do not rename it — NKP expects the auto-populated name. 
+
+Important: version matching
+Each NKP version ships its own OS image tied to a specific Kubernetes version:
+
+NKP version	K8s version	Rocky image
+2.17	1.34.x	Rocky 9.7
+2.16	1.33.x	Rocky 9.6
+2.15	1.32.x	Rocky 9.5
+
+Always download the OS image that matches your NKP CLI version — mixing versions will cause bootstrap failures
