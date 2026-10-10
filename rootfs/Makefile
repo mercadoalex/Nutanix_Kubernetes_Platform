@@ -1,46 +1,77 @@
 # rootfs/Makefile
-# Top-level build orchestration for all NKP lab rootfs images
+# Build and push NKP lab OCI images to GHCR
 #
 # Usage:
-#   make all          — build all three images (bootstrap, controlplane, worker)
-#   make bootstrap    — build only nkp-bootstrap.ext4 (vm1)
-#   make controlplane — build only nkp-controlplane.ext4 (vm2)
-#   make worker       — build only nkp-worker.ext4 (vm3–5)
-#   make clean        — remove dist/ directory
+#   make all          — build + push all three images
+#   make bootstrap    — build + push nkp-bootstrap
+#   make controlplane — build + push nkp-controlplane
+#   make worker       — build + push nkp-worker
+#   make build-all    — build only (no push)
+#   make clean        — remove local images
 #
 # Prerequisites:
-#   - Docker running on the build host
-#   - nkp binary placed at bootstrap/nkp (see bootstrap/Dockerfile comments)
-#   - sudo available (needed for loop-mount during ext4 creation)
+#   - Docker Desktop running (macOS is fine — buildx handles linux/amd64)
+#   - Logged in to GHCR:
+#       echo $GITHUB_TOKEN | docker login ghcr.io -u <your-github-user> --password-stdin
 
-DIST_DIR := ../dist
-SHELL    := /bin/bash
+REGISTRY   ?= ghcr.io/mercadoalex
+RELEASE    ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
+PLATFORM   := linux/amd64
 
-.PHONY: all bootstrap controlplane worker clean
+BOOTSTRAP_IMAGE    := $(REGISTRY)/nkp-bootstrap
+CONTROLPLANE_IMAGE := $(REGISTRY)/nkp-controlplane
+WORKER_IMAGE       := $(REGISTRY)/nkp-worker
+
+.PHONY: all bootstrap controlplane worker build-all clean login help
 
 all: bootstrap controlplane worker
-	@echo ""
-	@echo "All images built:"
-	@ls -lh $(DIST_DIR)/*.ext4 2>/dev/null || echo "  (none found in $(DIST_DIR))"
 
-bootstrap: $(DIST_DIR)/nkp-bootstrap.ext4
+bootstrap:
+	@echo "==> Building + pushing nkp-bootstrap (vm1)..."
+	docker buildx build \
+		--platform $(PLATFORM) \
+		--push \
+		-t $(BOOTSTRAP_IMAGE):$(RELEASE) \
+		-t $(BOOTSTRAP_IMAGE):latest \
+		--progress=plain \
+		bootstrap/
+	@echo "✓ $(BOOTSTRAP_IMAGE):latest"
 
-controlplane: $(DIST_DIR)/nkp-controlplane.ext4
+controlplane:
+	@echo "==> Building + pushing nkp-controlplane (vm2)..."
+	docker buildx build \
+		--platform $(PLATFORM) \
+		--push \
+		-t $(CONTROLPLANE_IMAGE):$(RELEASE) \
+		-t $(CONTROLPLANE_IMAGE):latest \
+		--progress=plain \
+		controlplane/
+	@echo "✓ $(CONTROLPLANE_IMAGE):latest"
 
-worker: $(DIST_DIR)/nkp-worker.ext4
+worker:
+	@echo "==> Building + pushing nkp-worker (vm3–5)..."
+	docker buildx build \
+		--platform $(PLATFORM) \
+		--push \
+		-t $(WORKER_IMAGE):$(RELEASE) \
+		-t $(WORKER_IMAGE):latest \
+		--progress=plain \
+		worker/
+	@echo "✓ $(WORKER_IMAGE):latest"
 
-$(DIST_DIR)/nkp-bootstrap.ext4:
-	@echo "==> Building bootstrap image (vm1)..."
-	cd bootstrap && bash build.sh
-
-$(DIST_DIR)/nkp-controlplane.ext4:
-	@echo "==> Building controlplane image (vm2)..."
-	cd controlplane && bash build.sh
-
-$(DIST_DIR)/nkp-worker.ext4:
-	@echo "==> Building worker image (vm3–5)..."
-	cd worker && bash build.sh
+build-all:
+	@echo "==> Building all images (local only, no push)..."
+	docker buildx build --platform $(PLATFORM) --load -t $(BOOTSTRAP_IMAGE):dev    bootstrap/
+	docker buildx build --platform $(PLATFORM) --load -t $(CONTROLPLANE_IMAGE):dev controlplane/
+	docker buildx build --platform $(PLATFORM) --load -t $(WORKER_IMAGE):dev       worker/
 
 clean:
-	rm -rf $(DIST_DIR)
-	@echo "dist/ removed."
+	docker rmi $(BOOTSTRAP_IMAGE):latest    $(BOOTSTRAP_IMAGE):dev    2>/dev/null || true
+	docker rmi $(CONTROLPLANE_IMAGE):latest $(CONTROLPLANE_IMAGE):dev 2>/dev/null || true
+	docker rmi $(WORKER_IMAGE):latest       $(WORKER_IMAGE):dev       2>/dev/null || true
+
+login:
+	@echo "Run: echo \$$GITHUB_TOKEN | docker login ghcr.io -u <your-github-user> --password-stdin"
+
+help:
+	@grep -E '^[a-zA-Z_-]+:.*?##' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-20s %s\n", $$1, $$2}'

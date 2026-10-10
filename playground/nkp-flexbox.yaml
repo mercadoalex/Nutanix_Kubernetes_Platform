@@ -11,10 +11,9 @@
 # Network: 172.16.0.0/24 (iximious default local subnet)
 #   MetalLB pool: 172.16.0.100–172.16.0.120 (outside VM IPs, inside subnet)
 #
-# Schema based on iximius Labs playground API (observed from k3s playground):
-#   networks: list of named L2 segments
-#   machines: each VM — name, users, drives (source = rootfs name, size), network, resources
-#   tabs:     IDE / terminal panels shown in the UI
+# OCI images built locally on macOS with:
+#   cd rootfs && make all
+# and pushed to GHCR. No Linux build host or CI runner required.
 
 name: nkp-lab
 title: "NKP — Nutanix Kubernetes Platform Lab"
@@ -35,7 +34,7 @@ machines:
       - name: laborant
         default: true
     drives:
-      - source: nkp-bootstrap     # custom rootfs built from rootfs/bootstrap/
+      - source: oci://ghcr.io/mercadoalex/nkp-bootstrap:latest
         mount: /
         size: 10GiB
     network:
@@ -53,7 +52,7 @@ machines:
       - name: laborant
         default: true
     drives:
-      - source: nkp-controlplane  # custom rootfs built from rootfs/controlplane/
+      - source: oci://ghcr.io/mercadoalex/nkp-controlplane:latest
         mount: /
         size: 15GiB
     network:
@@ -71,7 +70,7 @@ machines:
       - name: laborant
         default: true
     drives:
-      - source: nkp-worker        # custom rootfs built from rootfs/worker/
+      - source: oci://ghcr.io/mercadoalex/nkp-worker:latest
         mount: /
         size: 15GiB
     network:
@@ -89,7 +88,7 @@ machines:
       - name: laborant
         default: true
     drives:
-      - source: nkp-worker        # same rootfs image reused for all workers
+      - source: oci://ghcr.io/mercadoalex/nkp-worker:latest
         mount: /
         size: 15GiB
     network:
@@ -107,7 +106,7 @@ machines:
       - name: laborant
         default: true
     drives:
-      - source: nkp-worker
+      - source: oci://ghcr.io/mercadoalex/nkp-worker:latest
         mount: /
         size: 15GiB
     network:

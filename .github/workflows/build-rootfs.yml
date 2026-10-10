@@ -1,27 +1,20 @@
-name: Build rootfs images
+name: Build and push rootfs images
 
-# Triggered manually (workflow_dispatch) or on push to main when rootfs changes.
-# Produces three .ext4 images and uploads them to a GitHub Release:
-#   nkp-bootstrap.ext4    — vm1  (Ubuntu 24.04 + nkp CLI + Docker + kind + k9s)
-#   nkp-controlplane.ext4 — vm2  (Rocky 9.7 + RKE2 server + airgap images)
-#   nkp-worker.ext4       — vm3–5 (Rocky 9.7 + RKE2 agent  + airgap images)
+# Builds all three NKP lab OCI images and pushes them to GHCR.
+# Triggered on push to main (when rootfs changes) or manually.
 #
-# ── nkp binary ────────────────────────────────────────────────────────────────
-# The nkp v2.17.x standalone binary is publicly downloadable from the D2iQ CDN
-# (NKP is the renamed D2iQ DKP product; the CDN path changed but remained public
-# through v2.17.1):
+# Images produced:
+#   ghcr.io/mercadoalex/nkp-bootstrap:latest    — vm1 (Ubuntu 24.04 + nkp + kind + k9s)
+#   ghcr.io/mercadoalex/nkp-controlplane:latest  — vm2 (Rocky 9.7 + RKE2 server)
+#   ghcr.io/mercadoalex/nkp-worker:latest        — vm3–5 (Rocky 9.7 + RKE2 agent)
+#
+# The nkp binary is downloaded automatically from the D2iQ public CDN:
 #   https://downloads.d2iq.com/dkp/v2.17.1/nkp_v2.17.1_linux_amd64.tar.gz
+# No secrets or portal accounts required.
 #
-# No secret or portal account required. The workflow downloads it automatically.
-#
-# ── release upload ────────────────────────────────────────────────────────────
-# Images are uploaded to the GitHub Release matching the tag that triggered the
-# workflow (e.g. v2.17.1). For manual runs they are attached to a draft release
-# named "rootfs-<run_id>".
-#
-# Images are large (2–8 GB each). GitHub Releases support up to 2 GB per asset
-# on public repos; use GitHub Large File Storage or an external store for private
-# repos that exceed this. The controlplane and worker images are split if needed.
+# Same pattern used in other iximious courses (see K8s_gpu_lab).
+# You can also build and push locally from macOS:
+#   cd rootfs && make all
 
 on:
   push:
@@ -30,190 +23,69 @@ on:
       - 'rootfs/**'
       - '.github/workflows/build-rootfs.yml'
   workflow_dispatch:
-    inputs:
-      release_tag:
-        description: 'Release tag to attach assets to (e.g. v2.17.1). Leave blank for draft.'
-        required: false
-        default: ''
+
+env:
+  REGISTRY: ghcr.io
+  OWNER: mercadoalex
 
 jobs:
-  # ── build each image in parallel ──────────────────────────────────────────
   build:
-    name: Build ${{ matrix.target }}
+    name: Build ${{ matrix.image }}
     runs-on: ubuntu-latest
     timeout-minutes: 90
+
+    permissions:
+      contents: read
+      packages: write
 
     strategy:
       fail-fast: false
       matrix:
         include:
-          - target: bootstrap
+          - image: nkp-bootstrap
             context: rootfs/bootstrap
-            output: nkp-bootstrap.ext4
-            size_mb: 8192
-            label: nkp-bootstrap
-            needs_nkp: true
 
-          - target: controlplane
+          - image: nkp-controlplane
             context: rootfs/controlplane
-            output: nkp-controlplane.ext4
-            size_mb: 12288
-            label: nkp-controlplane
-            needs_nkp: false
 
-          - target: worker
+          - image: nkp-worker
             context: rootfs/worker
-            output: nkp-worker.ext4
-            size_mb: 10240
-            label: nkp-worker
-            needs_nkp: false
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # ── download nkp binary from public D2iQ CDN (bootstrap only) ───────
-      - name: Download nkp binary
-        if: matrix.needs_nkp == true
-        run: |
-          NKP_VERSION="2.17.1"
-          echo "→ Downloading nkp v${NKP_VERSION} from D2iQ CDN..."
-          curl -fsSL \
-            "https://downloads.d2iq.com/dkp/v${NKP_VERSION}/nkp_v${NKP_VERSION}_linux_amd64.tar.gz" \
-            | tar xz -C rootfs/bootstrap/ nkp
-          chmod +x rootfs/bootstrap/nkp
-          echo "nkp binary ready: $(file rootfs/bootstrap/nkp)"
-          rootfs/bootstrap/nkp version 2>/dev/null || true
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      # ── set up Docker with BuildKit + layer cache ────────────────────────
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
       - name: Cache Docker layers
         uses: actions/cache@v4
         with:
-          path: /tmp/.buildx-cache-${{ matrix.target }}
-          key: buildx-${{ matrix.target }}-${{ hashFiles(format('{0}/Dockerfile', matrix.context)) }}
+          path: /tmp/.buildx-cache-${{ matrix.image }}
+          key: buildx-${{ matrix.image }}-${{ hashFiles(format('{0}/Dockerfile', matrix.context)) }}
           restore-keys: |
-            buildx-${{ matrix.target }}-
+            buildx-${{ matrix.image }}-
 
-      # ── build the Docker image ───────────────────────────────────────────
-      - name: Build Docker image (${{ matrix.target }})
+      - name: Build and push ${{ matrix.image }}
         uses: docker/build-push-action@v6
         with:
           context: ${{ matrix.context }}
-          push: false
-          load: true
-          tags: ${{ matrix.label }}:latest
-          cache-from: type=local,src=/tmp/.buildx-cache-${{ matrix.target }}
-          cache-to: type=local,dest=/tmp/.buildx-cache-${{ matrix.target }}-new,mode=max
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ matrix.image }}:latest
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ matrix.image }}:${{ github.sha }}
+          cache-from: type=local,src=/tmp/.buildx-cache-${{ matrix.image }}
+          cache-to: type=local,dest=/tmp/.buildx-cache-${{ matrix.image }}-new,mode=max
 
-      # Prevent cache from growing unbounded
       - name: Rotate build cache
         run: |
-          rm -rf /tmp/.buildx-cache-${{ matrix.target }}
-          mv /tmp/.buildx-cache-${{ matrix.target }}-new /tmp/.buildx-cache-${{ matrix.target }}
-
-      # ── export container → ext4 ──────────────────────────────────────────
-      - name: Create ext4 image (${{ matrix.target }})
-        run: |
-          set -euo pipefail
-
-          OUTPUT="${{ matrix.output }}"
-          SIZE_MB=${{ matrix.size_mb }}
-          LABEL="${{ matrix.label }}"
-
-          echo "→ Exporting container filesystem..."
-          CONTAINER_ID=$(docker create "${LABEL}:latest")
-          TMP_TAR=$(mktemp /tmp/rootfs-XXXXXX.tar)
-          docker export "${CONTAINER_ID}" > "${TMP_TAR}"
-          docker rm "${CONTAINER_ID}"
-
-          echo "→ Creating ext4 image (${SIZE_MB} MB)..."
-          dd if=/dev/zero of="${OUTPUT}" bs=1M count="${SIZE_MB}" status=progress
-          mkfs.ext4 -F -L "${LABEL}" "${OUTPUT}"
-
-          echo "→ Populating ext4 image..."
-          TMP_MNT=$(mktemp -d)
-          sudo mount -o loop "${OUTPUT}" "${TMP_MNT}"
-          sudo tar -xf "${TMP_TAR}" -C "${TMP_MNT}" --numeric-owner
-          sudo umount "${TMP_MNT}"
-          rmdir "${TMP_MNT}"
-          rm "${TMP_TAR}"
-
-          echo ""
-          echo "✓ Built: ${OUTPUT}"
-          ls -lh "${OUTPUT}"
-
-      # ── compress for upload ──────────────────────────────────────────────
-      - name: Compress ext4 image
-        run: |
-          echo "→ Compressing ${{ matrix.output }}..."
-          zstd -T0 -9 "${{ matrix.output }}" -o "${{ matrix.output }}.zst"
-          ls -lh "${{ matrix.output }}.zst"
-          # Remove uncompressed image to free runner disk space
-          rm "${{ matrix.output }}"
-
-      # ── upload as workflow artifact (always, for debug / non-release runs)
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.output }}.zst
-          path: ${{ matrix.output }}.zst
-          retention-days: 7
-          compression-level: 0   # already zstd-compressed
-
-  # ── attach to GitHub Release ──────────────────────────────────────────────
-  release:
-    name: Attach to GitHub Release
-    needs: build
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') || inputs.release_tag != ''
-
-    permissions:
-      contents: write
-
-    steps:
-      - name: Download all build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: dist/
-          merge-multiple: true
-
-      - name: Determine release tag
-        id: tag
-        run: |
-          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
-            echo "tag=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
-          elif [[ -n "${{ inputs.release_tag }}" ]]; then
-            echo "tag=${{ inputs.release_tag }}" >> "$GITHUB_OUTPUT"
-          else
-            echo "tag=rootfs-${{ github.run_id }}" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Create / update Release and upload assets
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ steps.tag.outputs.tag }}
-          name: "NKP rootfs images — ${{ steps.tag.outputs.tag }}"
-          draft: ${{ !startsWith(github.ref, 'refs/tags/') }}
-          body: |
-            ## NKP Lab rootfs images
-
-            Built from commit ${{ github.sha }} on ${{ github.run_id }}.
-
-            | Image | VM | Base OS | Size (compressed) |
-            |---|---|---|---|
-            | `nkp-bootstrap.ext4.zst` | vm1 | Ubuntu 24.04 | ~2 GB |
-            | `nkp-controlplane.ext4.zst` | vm2 | Rocky 9.7 | ~4 GB |
-            | `nkp-worker.ext4.zst` | vm3–5 | Rocky 9.7 | ~3 GB |
-
-            ### Usage
-            Decompress before uploading to iximious:
-            ```bash
-            zstd -d nkp-bootstrap.ext4.zst
-            zstd -d nkp-controlplane.ext4.zst
-            zstd -d nkp-worker.ext4.zst
-            ```
-            Then reference the `.ext4` files in your Flexbox playground YAML.
-          files: dist/*.zst
+          rm -rf /tmp/.buildx-cache-${{ matrix.image }}
+          mv /tmp/.buildx-cache-${{ matrix.image }}-new /tmp/.buildx-cache-${{ matrix.image }}
