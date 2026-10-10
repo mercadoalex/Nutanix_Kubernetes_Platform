@@ -11,10 +11,10 @@
 
 # ── downloads stage — pre-fetched files copied in (no curl inside QEMU) ──────
 FROM scratch AS downloads
-COPY downloads/rke2/install.sh                         /install.sh
-COPY downloads/rke2/rke2-images.linux-amd64.tar.zst   /rke2-images.linux-amd64.tar.zst
-COPY downloads/rke2/rke2-images-core.linux-amd64.tar.zst /rke2-images-core.linux-amd64.tar.zst
-COPY downloads/rke2/rke2-images-cilium.linux-amd64.tar.zst /rke2-images-cilium.linux-amd64.tar.zst
+COPY rke2/install.sh                         /install.sh
+COPY rke2/rke2-images.linux-amd64.tar.zst   /rke2-images.linux-amd64.tar.zst
+COPY rke2/rke2-images-core.linux-amd64.tar.zst /rke2-images-core.linux-amd64.tar.zst
+COPY rke2/rke2-images-cilium.linux-amd64.tar.zst /rke2-images-cilium.linux-amd64.tar.zst
 
 # Pin to exact minor — never use the floating rockylinux:9 tag
 FROM rockylinux/rockylinux:9.6
@@ -57,17 +57,17 @@ RUN curl -fsSL "https://dl.k8s.io/release/v${KUBECTL_VERSION}/bin/linux/amd64/ku
     && chmod +x /usr/local/bin/kubectl
 
 # ── RKE2 server install ───────────────────────────────────────────────────────
-# Uses pre-downloaded installer from downloads/rke2/install.sh (COPY is faster
+# Uses pre-downloaded installer from rke2/install.sh (COPY is faster
 # than curl inside QEMU emulation on Apple Silicon).
-# To refresh: curl -fsSL https://get.rke2.io -o downloads/rke2/install.sh
+# To refresh: curl -fsSL https://get.rke2.io -o rke2/install.sh
 COPY --from=downloads /install.sh /tmp/rke2-install.sh
 RUN INSTALL_RKE2_VERSION="${RKE2_VERSION}" \
     INSTALL_RKE2_TYPE="server" \
     sh /tmp/rke2-install.sh && rm /tmp/rke2-install.sh
 
 # ── RKE2 airgap image bundles ────────────────────────────────────────────────
-# Pre-downloaded to downloads/rke2/ — copied in directly (no in-build curl).
-# To refresh: see downloads/rke2/ directory or rootfs/README.md
+# Pre-downloaded to rke2/ — copied in directly (no in-build curl).
+# To refresh: see rke2/ directory or rootfs/README.md
 RUN mkdir -p /var/lib/rancher/rke2/agent/images/
 COPY --from=downloads \
     /rke2-images.linux-amd64.tar.zst \

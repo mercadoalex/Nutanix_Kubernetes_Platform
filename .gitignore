@@ -52,8 +52,8 @@ __pycache__/
 *.log
 
 # ── RKE2 pre-downloaded binaries ─────────────────────────────────────────────
-downloads/rke2/*.tar.zst
-downloads/rke2/install.sh
+rootfs/rke2/*.tar.zst
+rootfs/rke2/install.sh
 
 # ── GitHub Actions (disabled — using local macOS build instead) ─────────────
 .github/

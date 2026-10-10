@@ -10,10 +10,10 @@
 
 # ── downloads stage — pre-fetched files copied in (no curl inside QEMU) ──────
 FROM scratch AS downloads
-COPY downloads/rke2/install.sh                              /install.sh
-COPY downloads/rke2/rke2-images.linux-amd64.tar.zst        /rke2-images.linux-amd64.tar.zst
-COPY downloads/rke2/rke2-images-core.linux-amd64.tar.zst   /rke2-images-core.linux-amd64.tar.zst
-COPY downloads/rke2/rke2-images-cilium.linux-amd64.tar.zst /rke2-images-cilium.linux-amd64.tar.zst
+COPY rke2/install.sh                              /install.sh
+COPY rke2/rke2-images.linux-amd64.tar.zst        /rke2-images.linux-amd64.tar.zst
+COPY rke2/rke2-images-core.linux-amd64.tar.zst   /rke2-images-core.linux-amd64.tar.zst
+COPY rke2/rke2-images-cilium.linux-amd64.tar.zst /rke2-images-cilium.linux-amd64.tar.zst
 
 FROM rockylinux/rockylinux:9.6
 
