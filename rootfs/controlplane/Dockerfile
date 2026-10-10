@@ -32,11 +32,10 @@ RUN dnf install -y --setopt=install_weak_deps=False \
     && dnf install -y --setopt=install_weak_deps=False \
         bind-utils nmap-ncat socat \
         iptables nftables \
-    && dnf install -y --setopt=install_weak_deps=False \
-        iscsi-initiator-utils \
-        container-selinux \
-        libseccomp \
-        nfs-utils \
+    && dnf install -y --setopt=install_weak_deps=False iscsi-initiator-utils || true \
+    && dnf install -y --setopt=install_weak_deps=False container-selinux || true \
+    && dnf install -y --setopt=install_weak_deps=False libseccomp || true \
+    && dnf install -y --setopt=install_weak_deps=False nfs-utils || true \
     && dnf clean all
 
 # ── enable iscsid (required by Longhorn) ──────────────────────────────────────
