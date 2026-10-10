@@ -27,18 +27,16 @@ RUN dnf install -y --setopt=install_weak_deps=False \
         tmux \
         jq \
         bash-completion \
-        vim \
+        vim-minimal \
         less \
         iproute \
         iputils \
         bind-utils \
-        nc \
+        nmap-ncat \
         socat \
         iptables \
         nftables \
-        # Longhorn dependency — open-iscsi
         iscsi-initiator-utils \
-        # RKE2 / containerd dependencies
         container-selinux \
         libseccomp \
         nfs-utils \
