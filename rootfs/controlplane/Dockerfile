@@ -17,7 +17,7 @@ COPY rke2/rke2-images-core.linux-amd64.tar.zst /rke2-images-core.linux-amd64.tar
 COPY rke2/rke2-images-cilium.linux-amd64.tar.zst /rke2-images-cilium.linux-amd64.tar.zst
 
 # Pin to exact minor — never use the floating rockylinux:9 tag
-FROM rockylinux/rockylinux:9.6
+FROM rockylinux/rockylinux:9.7
 
 # ── versions (pinned to NKP 2.17 / K8s 1.34.x) ───────────────────────────────
 ARG RKE2_VERSION=v1.34.3+rke2r1

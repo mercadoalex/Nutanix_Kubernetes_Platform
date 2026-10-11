@@ -50,10 +50,10 @@ shared flat L2 network. No cloud account or physical hardware required.
 | VM | IP | Role | OS |
 |---|---|---|---|
 | `bootstrap` | `172.16.0.10` | Operator workstation (`nkp` CLI, `kind`, `k9s`, Ansible) | Ubuntu 24.04 |
-| `controlplane` | `172.16.0.11` | RKE2 server (kube-apiserver, etcd, scheduler) | Rocky Linux 9.6 |
-| `worker-01` | `172.16.0.12` | RKE2 agent | Rocky Linux 9.6 |
-| `worker-02` | `172.16.0.13` | RKE2 agent | Rocky Linux 9.6 |
-| `worker-03` | `172.16.0.14` | RKE2 agent | Rocky Linux 9.6 |
+| `controlplane` | `172.16.0.11` | RKE2 server (kube-apiserver, etcd, scheduler) | Rocky Linux 9.7 |
+| `worker-01` | `172.16.0.12` | RKE2 agent | Rocky Linux 9.7 |
+| `worker-02` | `172.16.0.13` | RKE2 agent | Rocky Linux 9.7 |
+| `worker-03` | `172.16.0.14` | RKE2 agent | Rocky Linux 9.7 |
 
 ## Prerequisites
 

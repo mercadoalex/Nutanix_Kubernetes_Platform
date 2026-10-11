@@ -57,3 +57,5 @@ rootfs/rke2/install.sh
 
 # ── GitHub Actions (disabled — using local macOS build instead) ─────────────
 .github/
+
+FEASIBILITY.md

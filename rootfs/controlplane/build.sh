@@ -12,9 +12,9 @@ cd "$(dirname "${BASH_SOURCE[0]}")/.."
 REGISTRY="${REGISTRY:-ghcr.io/mercadoalex}"
 RELEASE="${RELEASE:-$(git describe --tags --always --dirty 2>/dev/null || echo dev)}"
 
-if [[ ! -f "downloads/rke2/install.sh" ]]; then
-    echo "ERROR: downloads/rke2/ not found. Run from repo root and ensure RKE2 files are pre-downloaded."
-    echo "  ls downloads/rke2/"
+if [[ ! -f "rke2/install.sh" ]]; then
+    echo "ERROR: rke2/ not found. Run from rootfs/ root and ensure RKE2 files are pre-downloaded."
+    echo "  ls rke2/"
     exit 1
 fi
 
