@@ -1,7 +1,7 @@
 ---
 kind: unit
 title: "Lesson 13 — GPU Support on NKP"
-name: 1.lesson-gpu-unit-1
+name: 1-lesson-gpu-unit-1
 ---
 
 # Lesson 13 — GPU Support on NKP

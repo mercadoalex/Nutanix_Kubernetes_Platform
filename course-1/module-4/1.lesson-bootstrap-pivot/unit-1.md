@@ -1,7 +1,7 @@
 ---
 kind: unit
 title: "Lesson 06 — Bootstrap & Pivot: Building the Management Cluster"
-name: 1.lesson-bootstrap-pivot-unit-1
+name: 1-lesson-bootstrap-pivot-unit-1
 ---
 
 # Lesson 06 — Bootstrap & Pivot: Building the Management Cluster

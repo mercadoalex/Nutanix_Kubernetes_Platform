@@ -1,7 +1,7 @@
 ---
 kind: unit
 title: "Lesson 00b — Nutanix Community Edition 2.1"
-name: 2.lesson-community-edition-unit-1
+name: 2-lesson-community-edition-unit-1
 ---
 
 # Lesson 00b — Nutanix Community Edition 2.1

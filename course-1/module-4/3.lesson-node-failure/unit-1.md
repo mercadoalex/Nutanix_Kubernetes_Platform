@@ -1,7 +1,7 @@
 ---
 kind: unit
 title: "Lesson 4.3 — Node Failure: Simulating and Recovering from a Node Loss"
-name: 3.lesson-node-failure-unit-1
+name: 3-lesson-node-failure-unit-1
 ---
 
 # Lesson 4.3 — Node Failure: Simulating and Recovering from a Node Loss

@@ -20,9 +20,6 @@ tagz:
 - capi
 - kommander
 - flux
-- cilium
-- longhorn
-- ansible
 
 createdAt: 2026-10-10
 updatedAt: 2026-10-10
@@ -60,3 +57,4 @@ shared flat L2 network. No cloud account or physical hardware required.
 - Familiarity with Kubernetes basics (pods, deployments, services)
 - Basic Linux command line (SSH, systemctl, journalctl)
 - No Nutanix experience required — everything is explained from scratch
+

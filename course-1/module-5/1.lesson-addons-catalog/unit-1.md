@@ -1,7 +1,7 @@
 ---
 kind: unit
 title: "Lesson 5.1 — Add-ons Catalog: Deploying Platform Services with Flux"
-name: 1.lesson-addons-catalog-unit-1
+name: 1-lesson-addons-catalog-unit-1
 ---
 
 # Lesson 5.1 — Add-ons Catalog: Deploying Platform Services with Flux

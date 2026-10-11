@@ -1,7 +1,7 @@
 ---
 kind: unit
 title: "Lesson 02 — NKP Bootstrap: The Jump Host and Bootstrap Cluster"
-name: 2.lesson-prism-bootstrap-unit-1
+name: 2-lesson-prism-bootstrap-unit-1
 ---
 
 # Lesson 02 — NKP Bootstrap: The Jump Host and Bootstrap Cluster

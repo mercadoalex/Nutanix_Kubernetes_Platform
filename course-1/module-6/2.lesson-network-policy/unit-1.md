@@ -1,7 +1,7 @@
 ---
 kind: unit
 title: "Lesson 6.2 — Network Policy: Cilium and Namespace Isolation"
-name: 2.lesson-network-policy-unit-1
+name: 2-lesson-network-policy-unit-1
 ---
 
 # Lesson 6.2 — Network Policy: Cilium and Namespace Isolation

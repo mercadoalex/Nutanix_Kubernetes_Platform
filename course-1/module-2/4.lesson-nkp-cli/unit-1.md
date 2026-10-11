@@ -1,7 +1,7 @@
 ---
 kind: unit
 title: "Lesson 04 — The NKP CLI: kubeconfig, Contexts, and Cluster Access"
-name: 4.lesson-nkp-cli-unit-1
+name: 4-lesson-nkp-cli-unit-1
 ---
 
 # Lesson 04 — The NKP CLI: kubeconfig, Contexts, and Cluster Access

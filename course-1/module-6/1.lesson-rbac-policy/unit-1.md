@@ -1,7 +1,7 @@
 ---
 kind: unit
 title: "Lesson 6.1 — RBAC & Policy: ClusterRoles, RoleBindings, and OPA/Gatekeeper"
-name: 1.lesson-rbac-policy-unit-1
+name: 1-lesson-rbac-policy-unit-1
 ---
 
 # Lesson 6.1 — RBAC & Policy: ClusterRoles, RoleBindings, and OPA/Gatekeeper

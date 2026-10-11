@@ -11,7 +11,7 @@ createdAt: 2026-10-10
 updatedAt: 2026-10-10
 categories:
   - kubernetes
-  - platform
+  - cloud
 tagz:
   - gitops
   - flux

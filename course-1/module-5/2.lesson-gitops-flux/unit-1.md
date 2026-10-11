@@ -1,7 +1,7 @@
 ---
 kind: unit
 title: "Lesson 5.2 — GitOps with Flux: The Full Loop"
-name: 2.lesson-gitops-flux-unit-1
+name: 2-lesson-gitops-flux-unit-1
 ---
 
 # Lesson 5.2 — GitOps with Flux: The Full Loop

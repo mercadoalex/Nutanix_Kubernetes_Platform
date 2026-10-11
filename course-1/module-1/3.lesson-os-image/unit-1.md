@@ -1,7 +1,7 @@
 ---
 kind: unit
 title: "Lesson 01 — Getting the NKP OS Image"
-name: 3.lesson-os-image-unit-1
+name: 3-lesson-os-image-unit-1
 ---
 
 # Lesson 01 — Getting the NKP OS Image

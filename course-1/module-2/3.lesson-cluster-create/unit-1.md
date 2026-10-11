@@ -1,7 +1,7 @@
 ---
 kind: unit
 title: "Lesson 03 — Creating the Management Cluster on AHV"
-name: 3.lesson-cluster-create-unit-1
+name: 3-lesson-cluster-create-unit-1
 ---
 
 # Lesson 03 — Creating the Management Cluster on AHV

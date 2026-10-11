@@ -11,10 +11,9 @@ createdAt: 2026-10-10
 updatedAt: 2026-10-10
 categories:
   - kubernetes
-  - gpu
-  - advanced
+  - observability
 tagz:
-  - gpu
+  - observability
   - nvidia
   - gpu-operator
   - mig
