@@ -19,12 +19,12 @@ ARG NKP_VERSION=2.17.1
 ARG HELM_VERSION=3.17.3
 ARG FLUX_VERSION=2.5.1
 
-COPY bootstrap/kubectl                                      /kubectl
-COPY bootstrap/kind                                         /kind
-COPY bootstrap/nkp_v2.17.1_linux_amd64.tar.gz             /nkp.tar.gz
-COPY bootstrap/helm-v3.17.3-linux-amd64.tar.gz            /helm.tar.gz
-COPY bootstrap/flux_2.5.1_linux_amd64.tar.gz              /flux.tar.gz
-COPY bootstrap/k9s_Linux_amd64.tar.gz                      /k9s.tar.gz
+COPY downloads/bootstrap/kubectl                           /kubectl
+COPY downloads/bootstrap/kind                              /kind
+COPY downloads/bootstrap/nkp_v2.17.1_linux_amd64.tar.gz   /nkp.tar.gz
+COPY downloads/bootstrap/helm-v3.17.3-linux-amd64.tar.gz  /helm.tar.gz
+COPY downloads/bootstrap/flux_2.5.1_linux_amd64.tar.gz    /flux.tar.gz
+COPY downloads/bootstrap/k9s_Linux_amd64.tar.gz            /k9s.tar.gz
 
 # ── main image ────────────────────────────────────────────────────────────────
 ARG UBUNTU_VERSION=24.04
@@ -125,6 +125,6 @@ RUN echo 'source <(kubectl completion bash)' >> /etc/bash.bashrc \
 
 # ── lab files ─────────────────────────────────────────────────────────────────
 RUN mkdir -p /home/laborant/labs /root/.kube
-COPY --chown=1000:1000 bootstrap/labs/ /home/laborant/labs/
+COPY --chown=1000:1000 rootfs/bootstrap/labs/ /home/laborant/labs/
 
 WORKDIR /home/laborant
