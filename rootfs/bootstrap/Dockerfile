@@ -13,6 +13,9 @@
 #
 # Target image: ghcr.io/mercadoalex/nkp-bootstrap:latest
 
+# ── global ARGs (must be before first FROM to be usable in FROM instructions) ─
+ARG UBUNTU_VERSION=24.04
+
 # ── downloads stage — pre-fetched binaries copied in (no curl inside build) ──
 FROM scratch AS downloads
 COPY downloads/bootstrap/kubectl                           /kubectl
@@ -23,7 +26,6 @@ COPY downloads/bootstrap/flux_2.5.1_linux_amd64.tar.gz    /flux.tar.gz
 COPY downloads/bootstrap/k9s_Linux_amd64.tar.gz            /k9s.tar.gz
 
 # ── main image ────────────────────────────────────────────────────────────────
-ARG UBUNTU_VERSION=24.04
 FROM ubuntu:${UBUNTU_VERSION}
 
 # ── versions (pinned — must match fetch.sh) ───────────────────────────────────
