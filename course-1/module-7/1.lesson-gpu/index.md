@@ -19,7 +19,6 @@ tagz:
   - gpu-operator
   - mig
   - time-slicing
-  - ahv
 playground:
   name: nkp-lab
 ---

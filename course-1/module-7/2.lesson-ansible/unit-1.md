@@ -1,3 +1,9 @@
+---
+kind: unit
+title: "Lesson 14 — Node Operations with Ansible"
+name: 2.lesson-ansible-unit-1
+---
+
 # Lesson 14 — Node Operations with Ansible
 
 > **Tier:** 3 — Full 5-VM lab  

@@ -17,7 +17,6 @@ tagz:
   - clusterrole
   - rolebinding
   - gatekeeper
-  - opa
   - policy
 playground:
   name: nkp-lab

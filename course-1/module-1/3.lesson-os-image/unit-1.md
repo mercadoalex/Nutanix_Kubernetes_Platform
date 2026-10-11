@@ -1,3 +1,9 @@
+---
+kind: unit
+title: "Lesson 01 — Getting the NKP OS Image"
+name: 3.lesson-os-image-unit-1
+---
+
 # Lesson 01 — Getting the NKP OS Image
 
 > **Objective:** Download the correct NKP Rocky Linux node image from the Nutanix Support Portal and upload it to Prism Central so that NKP can use it when provisioning cluster nodes.

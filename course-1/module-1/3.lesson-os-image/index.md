@@ -9,7 +9,7 @@ slug: lesson-os-image
 createdAt: 2026-10-10
 updatedAt: 2026-10-10
 categories:
-  - nutanix
+  - cloud
   - infrastructure
 tagz:
   - rocky-linux

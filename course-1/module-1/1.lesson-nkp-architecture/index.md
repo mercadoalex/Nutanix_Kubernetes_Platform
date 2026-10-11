@@ -12,7 +12,7 @@ createdAt: 2026-10-10
 updatedAt: 2026-10-10
 categories:
   - kubernetes
-  - nutanix
+  - cloud
 tagz:
   - nkp
   - capi

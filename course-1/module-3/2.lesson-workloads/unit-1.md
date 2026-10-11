@@ -1,3 +1,9 @@
+---
+kind: unit
+title: "Lesson 3.2 — Workloads: Deployments, Services, ConfigMaps, and Storage"
+name: 2.lesson-workloads-unit-1
+---
+
 # Lesson 3.2 — Workloads: Deployments, Services, ConfigMaps, and Storage
 
 > **Tier:** 2 — Single-VM interactive

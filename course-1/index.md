@@ -12,7 +12,7 @@ description: |-
 categories:
 - kubernetes
 - containers
-- nutanix
+- cloud
 
 tagz:
 - nkp

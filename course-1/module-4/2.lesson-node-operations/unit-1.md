@@ -1,3 +1,9 @@
+---
+kind: unit
+title: "Lesson 4.2 — Node Operations: drain, cordon, taints, and tolerations"
+name: 2.lesson-node-operations-unit-1
+---
+
 # Lesson 4.2 — Node Operations: drain, cordon, taints, and tolerations
 
 > **Tier:** 3 — Full Flexbox (5 VMs)

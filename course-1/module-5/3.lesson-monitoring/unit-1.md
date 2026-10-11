@@ -1,3 +1,9 @@
+---
+kind: unit
+title: "Lesson 5.3 — Monitoring: Prometheus and Grafana"
+name: 3.lesson-monitoring-unit-1
+---
+
 # Lesson 5.3 — Monitoring: Prometheus and Grafana
 
 > **Tier:** 3 — Full Flexbox (5 VMs)

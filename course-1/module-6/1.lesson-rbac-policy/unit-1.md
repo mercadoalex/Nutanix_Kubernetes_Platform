@@ -1,3 +1,9 @@
+---
+kind: unit
+title: "Lesson 6.1 — RBAC & Policy: ClusterRoles, RoleBindings, and OPA/Gatekeeper"
+name: 1.lesson-rbac-policy-unit-1
+---
+
 # Lesson 6.1 — RBAC & Policy: ClusterRoles, RoleBindings, and OPA/Gatekeeper
 
 > **Tier:** 3 — Full Flexbox (5 VMs)

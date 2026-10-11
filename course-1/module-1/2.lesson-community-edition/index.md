@@ -9,7 +9,7 @@ slug: lesson-community-edition
 createdAt: 2026-10-10
 updatedAt: 2026-10-10
 categories:
-  - nutanix
+  - cloud
   - infrastructure
 tagz:
   - community-edition

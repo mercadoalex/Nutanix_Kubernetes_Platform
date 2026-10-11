@@ -1,3 +1,9 @@
+---
+kind: unit
+title: "Lesson 06 — Bootstrap & Pivot: Building the Management Cluster"
+name: 1.lesson-bootstrap-pivot-unit-1
+---
+
 # Lesson 06 — Bootstrap & Pivot: Building the Management Cluster
 
 > **Tier:** 3 — Full Flexbox (5 VMs)  

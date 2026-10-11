@@ -1,3 +1,9 @@
+---
+kind: unit
+title: "Lesson 05 — kubectl Basics: Day-2 Cluster Operations"
+name: 1.lesson-kubectl-basics-unit-1
+---
+
 # Lesson 05 — kubectl Basics: Day-2 Cluster Operations
 
 > **Tier:** 2 — Single-VM interactive  
