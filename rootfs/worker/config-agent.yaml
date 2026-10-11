@@ -4,12 +4,12 @@
 # server and token are set at runtime. Students fill these in during Lesson 06:
 #
 #   cat > /etc/rancher/rke2/config.yaml <<EOF
-#   server: https://192.168.0.11:9345
+#   server: https://172.16.0.11:9345
 #   token: <token from vm2: cat /var/lib/rancher/rke2/server/node-token>
 #   EOF
 #   systemctl enable --now rke2-agent
 
-# server: "https://192.168.0.11:9345"   # set at runtime
+# server: "https://172.16.0.11:9345"   # set at runtime
 # token: "changeme-set-at-runtime"       # set at runtime
 
 # node-ip is auto-detected from the primary interface — no need to set it
