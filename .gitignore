@@ -4,12 +4,15 @@
 # nkp / dkp CLI binaries (large, redistributed from D2iQ/Nutanix CDN)
 rootfs/bootstrap/nkp
 downloads/*.tar.gz
+downloads/*.tar
+downloads/*.zip
 downloads/*.exe
 
 # Nutanix / OS images (large binary blobs — download separately)
 downloads/*.iso
 downloads/*.qcow2
 downloads/*.img
+downloads/rke2/
 
 # ── build output ──────────────────────────────────────────────────────────────
 # compiled rootfs ext4 images
@@ -20,18 +23,27 @@ dist/
 # Docker build cache artefacts
 .buildx-cache*/
 
+# build logs
+build.log
+*.build.log
+
 # ── secrets & credentials ─────────────────────────────────────────────────────
 *.b64
 *.pem
 *.key
+*.crt
+*.p12
 kubeconfig
 *.kubeconfig
+nkp-env
 .env
 .env.*
+*-env
 
 # ── macOS ─────────────────────────────────────────────────────────────────────
 .DS_Store
 **/.DS_Store
+__MACOSX/
 
 # ── editors ───────────────────────────────────────────────────────────────────
 .vscode/
@@ -45,17 +57,34 @@ __pycache__/
 *.pyc
 *.pyo
 .venv/
+venv/
+
+# ── Node (if any tooling is added) ───────────────────────────────────────────
+node_modules/
 
 # ── temporary files ───────────────────────────────────────────────────────────
 /tmp/
 *.tmp
 *.log
+*.bak
 
 # ── RKE2 pre-downloaded binaries ─────────────────────────────────────────────
 rootfs/rke2/*.tar.zst
 rootfs/rke2/install.sh
 
+# ── large course assets (committed separately / stored in LFS if needed) ──────
+*.jpeg
+*.jpg
+*.png
+!course-1/__static__/*.png
+!course-1/**/__static__/*.png
+!course-1/**/static/*.png
+
+# ── scratch / notes ───────────────────────────────────────────────────────────
+nkp.txt
+FEASIBILITY.md
+scratch/
+notes/
+
 # ── GitHub Actions (disabled — using local macOS build instead) ─────────────
 .github/
-
-FEASIBILITY.md
