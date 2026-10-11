@@ -1,0 +1,22 @@
+# .dockerignore — repo root context (used by: rootfs/bootstrap/Dockerfile)
+#
+# Bootstrap build context is the repo root (nkp_demo/).
+# Include only what bootstrap/Dockerfile actually COPYs:
+#   downloads/bootstrap/*   → binaries for the downloads stage
+#   rootfs/bootstrap/labs/  → lab files for /home/laborant/labs/
+#
+# Everything else is excluded to keep context transfer fast.
+
+# ── default: exclude everything ──────────────────────────────────────────────
+*
+# re-include only what the Dockerfile needs
+!downloads/bootstrap/
+
+# lab files for vm1
+!rootfs/
+!rootfs/bootstrap/
+!rootfs/bootstrap/labs/
+!rootfs/bootstrap/labs/**
+
+# keep Docker itself from choking on nested ignore files
+!.dockerignore

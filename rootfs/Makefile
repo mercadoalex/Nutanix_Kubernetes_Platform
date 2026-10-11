@@ -34,7 +34,8 @@ bootstrap:
 		-t $(BOOTSTRAP_IMAGE):$(RELEASE) \
 		-t $(BOOTSTRAP_IMAGE):latest \
 		--progress=plain \
-		bootstrap/
+		-f bootstrap/Dockerfile \
+		..
 	@echo "✓ $(BOOTSTRAP_IMAGE):latest"
 
 controlplane:

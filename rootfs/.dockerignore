@@ -1,0 +1,27 @@
+# rootfs/.dockerignore — rootfs/ context (used by: controlplane/Dockerfile, worker/Dockerfile)
+#
+# controlplane and worker build contexts are rootfs/ root.
+# Include only what those Dockerfiles actually COPY:
+#   rke2/install.sh + rke2/*.tar.zst  → downloads stage
+#   controlplane/*                    → config + labs for vm2
+#   worker/*                          → config + labs for vm3-5
+#
+# Exclude the bootstrap/ tree (158 MB nkp binary) and any other noise.
+
+# ── default: exclude everything ──────────────────────────────────────────────
+*
+
+# rke2 artifacts (needed by both controlplane and worker)
+!rke2/
+!rke2/**
+
+# controlplane-specific files
+!controlplane/
+!controlplane/**
+
+# worker-specific files
+!worker/
+!worker/**
+
+# exclude bootstrap entirely — not needed for controlplane/worker builds
+bootstrap/
