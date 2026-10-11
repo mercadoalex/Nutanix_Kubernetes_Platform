@@ -78,7 +78,7 @@ rootfs/rke2/install.sh
 *.png
 !course-1/__static__/*.png
 !course-1/**/__static__/*.png
-!course-1/**/static/*.png
+
 
 # ── scratch / notes ───────────────────────────────────────────────────────────
 nkp.txt
