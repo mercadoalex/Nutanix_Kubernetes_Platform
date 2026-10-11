@@ -11,10 +11,10 @@ createdAt: 2026-10-10
 updatedAt: 2026-10-10
 categories:
   - kubernetes
-  - ci-cd
+  - automation
 tagz:
   - ansible
-  - ci-cd
+  - automation
   - day-2
   - idempotent
 playground:
