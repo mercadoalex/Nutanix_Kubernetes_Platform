@@ -6,7 +6,8 @@ This directory contains the iximious playground YAML for the NKP course labs.
 
 | File | Purpose |
 |---|---|
-| [`nkp-flexbox.yaml`](nkp-flexbox.yaml) | 5-VM Flexbox playground — full NKP cluster topology |
+| [`playground.yaml`](playground.yaml) | 5-VM Flexbox playground — full NKP cluster topology |
+| [`nkp-flexbox.yaml`](nkp-flexbox.yaml) | Identical copy (kept for reference) |
 
 ---
 
@@ -15,19 +16,27 @@ This directory contains the iximious playground YAML for the NKP course labs.
 ```
 172.16.0.0/24  (iximious local network)
 
-bootstrap    172.16.0.10   4 vCPU / 4 GB   Ubuntu 24.04
+bootstrap    172.16.0.10   2 vCPU / 2 Gi   Ubuntu 24.04   20 Gi disk
                └─ nkp CLI, kubectl, helm, flux, kind (bootstrap cluster)
 
-controlplane 172.16.0.11   4 vCPU / 8 GB   Rocky Linux 9.7
+controlplane 172.16.0.11   2 vCPU / 4 Gi   Rocky Linux 9.7   20 Gi disk
                └─ RKE2 server (kube-apiserver, etcd, controller-manager)
 
-worker-01    172.16.0.12   4 vCPU / 8 GB   Rocky Linux 9.7
-worker-02    172.16.0.13   4 vCPU / 8 GB   Rocky Linux 9.7
-worker-03    172.16.0.14   4 vCPU / 8 GB   Rocky Linux 9.7
+worker-01    172.16.0.12   2 vCPU / 2 Gi   Rocky Linux 9.7   20 Gi disk
+worker-02    172.16.0.13   2 vCPU / 2 Gi   Rocky Linux 9.7   20 Gi disk
+worker-03    172.16.0.14   2 vCPU / 2 Gi   Rocky Linux 9.7   20 Gi disk
                └─ RKE2 agent (kubelet, kube-proxy)
 
 MetalLB pool: 172.16.0.100 – 172.16.0.120
 ```
+
+### iximious platform limits (free tier)
+
+| Resource | Limit | This playground |
+|---|---|---|
+| Total vCPU | 10 | 10 (2 × 5 VMs) |
+| Total RAM | 16 GiB | 12 Gi |
+| Total disk | 240 GiB | 100 Gi (20 Gi × 5 VMs) |
 
 ---
 
@@ -38,19 +47,23 @@ MetalLB pool: 172.16.0.100 – 172.16.0.120
    cd rootfs && make all
    ```
 
-2. **Register the custom rootfs images** with your iximious account.  
-   Upload `dist/nkp-bootstrap.ext4`, `dist/nkp-controlplane.ext4`, and `dist/nkp-worker.ext4`  
-   via the iximious Labs dashboard → Custom Images.  
-   The `source` names in `nkp-flexbox.yaml` must match the names you register:
-   - `nkp-bootstrap`
-   - `nkp-controlplane`
-   - `nkp-worker`
-
-3. **Register the playground** with your iximious account:
+2. **Push the OCI rootfs images** to GHCR:
    ```bash
-   iximiuz-labs playground publish --file playground/nkp-flexbox.yaml
+   cd rootfs && make push
    ```
-   *(exact CLI command may differ — check iximious Labs documentation)*
+   Images must be available at:
+   - `ghcr.io/mercadoalex/nkp-bootstrap:latest`
+   - `ghcr.io/mercadoalex/nkp-controlplane:latest`
+   - `ghcr.io/mercadoalex/nkp-worker:latest`
+
+3. **Create the playground** with `labctl`:
+   ```bash
+   cd ~/Desktop/nkp_demo
+   labctl playground create -f playground/playground.yaml -b flexbox nkp-lab
+   ```
+   The `name:` field in the manifest (`nkp-lab`) must match the `<local-name>` argument exactly.
+
+   **Published playground:** https://labs.iximiuz.com/playgrounds/nkp-lab-b2fa17d3
 
 ---
 

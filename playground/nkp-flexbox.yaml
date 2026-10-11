@@ -15,7 +15,7 @@
 #   cd rootfs && make all
 # and pushed to GHCR. No Linux build host or CI runner required.
 
-name: flexbox
+name: nkp-lab
 title: "NKP — Nutanix Kubernetes Platform Lab"
 description: >
   Full 5-VM NKP lab environment. vm1 is the operator workstation (nkp CLI, kind bootstrap cluster).

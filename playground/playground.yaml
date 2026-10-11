@@ -1,0 +1,148 @@
+kind: playground
+name: nkp-lab
+base: flexbox
+title: "NKP — Nutanix Kubernetes Platform Lab"
+description: |-
+    Full 5-VM NKP lab environment.
+    vm1 (bootstrap): operator workstation — nkp CLI, kubectl, helm, flux, kind bootstrap cluster.
+    vm2 (controlplane): RKE2 server — kube-apiserver, etcd, controller-manager.
+    vm3–vm5 (workers): RKE2 agents — kubelet, kube-proxy.
+    Network: 172.16.0.0/24 · MetalLB pool: 172.16.0.100–172.16.0.120
+categories:
+    - kubernetes
+
+playground:
+    networks:
+        - name: local
+          subnet: 172.16.0.0/24
+
+    machines:
+
+        # ── vm1: Bootstrap / operator workstation ──────────────────────────────
+        - name: bootstrap
+          users:
+              - name: root
+              - name: laborant
+                default: true
+          drives:
+              - mount: /
+                source: oci://ghcr.io/mercadoalex/nkp-bootstrap:latest
+                size: 20Gi
+          network:
+              interfaces:
+                  - network: local
+                    address: 172.16.0.10/24
+          resources:
+              cpuCount: 2
+              ramSize: 2Gi
+
+        # ── vm2: Management Cluster control plane ───────────────────────────────
+        - name: controlplane
+          users:
+              - name: root
+              - name: laborant
+                default: true
+          drives:
+              - mount: /
+                source: oci://ghcr.io/mercadoalex/nkp-controlplane:latest
+                size: 20Gi
+          network:
+              interfaces:
+                  - network: local
+                    address: 172.16.0.11/24
+          resources:
+              cpuCount: 2
+              ramSize: 4Gi
+
+        # ── vm3: Worker node 1 ──────────────────────────────────────────────────
+        - name: worker-01
+          users:
+              - name: root
+              - name: laborant
+                default: true
+          drives:
+              - mount: /
+                source: oci://ghcr.io/mercadoalex/nkp-worker:latest
+                size: 20Gi
+          network:
+              interfaces:
+                  - network: local
+                    address: 172.16.0.12/24
+          resources:
+              cpuCount: 2
+              ramSize: 2Gi
+
+        # ── vm4: Worker node 2 ──────────────────────────────────────────────────
+        - name: worker-02
+          users:
+              - name: root
+              - name: laborant
+                default: true
+          drives:
+              - mount: /
+                source: oci://ghcr.io/mercadoalex/nkp-worker:latest
+                size: 20Gi
+          network:
+              interfaces:
+                  - network: local
+                    address: 172.16.0.13/24
+          resources:
+              cpuCount: 2
+              ramSize: 2Gi
+
+        # ── vm5: Worker node 3 ──────────────────────────────────────────────────
+        - name: worker-03
+          users:
+              - name: root
+              - name: laborant
+                default: true
+          drives:
+              - mount: /
+                source: oci://ghcr.io/mercadoalex/nkp-worker:latest
+                size: 20Gi
+          network:
+              interfaces:
+                  - network: local
+                    address: 172.16.0.14/24
+          resources:
+              cpuCount: 2
+              ramSize: 2Gi
+
+    tabs:
+        - id: terminal-bootstrap
+          kind: terminal
+          name: bootstrap
+          machine: bootstrap
+
+        - id: ide-bootstrap
+          kind: ide
+          name: IDE
+          machine: bootstrap
+
+        - id: terminal-controlplane
+          kind: terminal
+          name: controlplane
+          machine: controlplane
+
+        - id: terminal-worker-01
+          kind: terminal
+          name: worker-01
+          machine: worker-01
+
+        - id: terminal-worker-02
+          kind: terminal
+          name: worker-02
+          machine: worker-02
+
+        - id: terminal-worker-03
+          kind: terminal
+          name: worker-03
+          machine: worker-03
+
+    accessControl:
+        canList:
+            - owner
+        canRead:
+            - anyone
+        canStart:
+            - anyone
