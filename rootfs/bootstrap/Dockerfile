@@ -15,10 +15,6 @@
 
 # ── downloads stage — pre-fetched binaries copied in (no curl inside build) ──
 FROM scratch AS downloads
-ARG NKP_VERSION=2.17.1
-ARG HELM_VERSION=3.17.3
-ARG FLUX_VERSION=2.5.1
-
 COPY downloads/bootstrap/kubectl                           /kubectl
 COPY downloads/bootstrap/kind                              /kind
 COPY downloads/bootstrap/nkp_v2.17.1_linux_amd64.tar.gz   /nkp.tar.gz
