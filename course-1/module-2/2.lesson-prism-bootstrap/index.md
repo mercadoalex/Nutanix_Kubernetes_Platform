@@ -17,5 +17,5 @@ tagz:
   - kind
   - bootstrap
 playground:
-  name: nkp-lab
+  name: flexbox
 ---

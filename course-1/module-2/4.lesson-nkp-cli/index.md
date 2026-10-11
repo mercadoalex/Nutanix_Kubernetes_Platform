@@ -17,7 +17,7 @@ tagz:
   - kubeconfig
   - contexts
 playground:
-  name: nkp-lab
+  name: flexbox
 tasks:
   verify_kubectl_context:
     machine: bootstrap

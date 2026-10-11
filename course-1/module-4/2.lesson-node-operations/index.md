@@ -18,7 +18,7 @@ tagz:
   - tolerations
   - pdb
 playground:
-  name: nkp-lab
+  name: flexbox
 tasks:
   verify_node_cordoned:
     machine: bootstrap

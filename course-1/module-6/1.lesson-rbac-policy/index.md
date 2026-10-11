@@ -19,7 +19,7 @@ tagz:
   - gatekeeper
   - policy
 playground:
-  name: nkp-lab
+  name: flexbox
 tasks:
   verify_rbac_deny:
     machine: bootstrap

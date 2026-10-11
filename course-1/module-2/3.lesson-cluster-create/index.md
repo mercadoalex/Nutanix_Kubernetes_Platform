@@ -18,5 +18,5 @@ tagz:
   - kommander
   - nkp-move
 playground:
-  name: nkp-lab
+  name: flexbox
 ---

@@ -17,7 +17,7 @@ tagz:
   - pvc
   - storage
 playground:
-  name: nkp-lab
+  name: flexbox
 tasks:
   verify_deployment_running:
     machine: bootstrap

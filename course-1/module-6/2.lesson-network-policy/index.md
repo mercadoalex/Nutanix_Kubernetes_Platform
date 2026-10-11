@@ -20,7 +20,7 @@ tagz:
   - namespace-isolation
   - l7
 playground:
-  name: nkp-lab
+  name: flexbox
 tasks:
   verify_default_deny:
     machine: bootstrap

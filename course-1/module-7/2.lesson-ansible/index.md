@@ -17,6 +17,6 @@ tagz:
   - day-2
   - idempotent
 playground:
-  name: nkp-lab
+  name: flexbox
 ---
 

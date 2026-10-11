@@ -17,7 +17,7 @@ tagz:
   - resilience
   - rke2
 playground:
-  name: nkp-lab
+  name: flexbox
 tasks:
   verify_vm4_notready:
     machine: bootstrap

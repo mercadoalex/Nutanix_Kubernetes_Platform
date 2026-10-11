@@ -19,5 +19,5 @@ tagz:
   - rke2
   - kommander
 playground:
-  name: nkp-lab
+  name: flexbox
 ---
