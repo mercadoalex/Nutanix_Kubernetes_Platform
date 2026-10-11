@@ -27,3 +27,8 @@ echo "✓ Playground updated"
 
 echo ""
 echo "✓ Done — https://labs.iximiuz.com/courses/${SLUG}"
+
+# ── Push a single file (usage example) ───────────────────────────────────────
+# labctl content push -f course "${SLUG}" -d "${COURSE_DIR}" \
+#   --file "module-7/1.lesson-gpu/index.md" \
+#   --file "module-7/2.lesson-ansible/index.md"
