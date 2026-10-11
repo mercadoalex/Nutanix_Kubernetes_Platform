@@ -162,4 +162,4 @@ Before moving on, you should be able to answer:
 3. Which component deploys Cilium — RKE2, CAPI, or Flux?
 4. What is the difference between a Managed cluster and an Attached cluster?
 
-Answers are in [`lessons/00-concepts/README.md`](../../lessons/00-concepts/README.md).
+Answers are in the lesson above — re-read the relevant section before moving on.
