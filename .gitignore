@@ -88,3 +88,11 @@ notes/
 
 # ── GitHub Actions (disabled — using local macOS build instead) ─────────────
 .github/
+
+# ── bootstrap pre-downloaded binaries (populated by downloads/bootstrap/fetch.sh) ──
+downloads/bootstrap/kubectl
+downloads/bootstrap/kind
+downloads/bootstrap/nkp_v*.tar.gz
+downloads/bootstrap/helm-v*.tar.gz
+downloads/bootstrap/flux_*.tar.gz
+downloads/bootstrap/k9s_*.tar.gz
