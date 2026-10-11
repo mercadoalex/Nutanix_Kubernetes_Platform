@@ -11,9 +11,9 @@ createdAt: 2026-10-10
 updatedAt: 2026-10-10
 categories:
   - kubernetes
-  - nvidia-gpu
+  - containers
 tagz:
-  - nvidia-gpu
+  - gpu
   - nvidia
   - gpu-operator
   - mig
