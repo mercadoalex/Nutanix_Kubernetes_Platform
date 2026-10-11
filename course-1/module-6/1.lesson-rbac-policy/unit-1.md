@@ -415,4 +415,4 @@ kubectl delete constrainttemplate requireresourcelimits
 
 ## Next steps
 
-➡️ [Module 6, Lesson 2 — Network Policy: Cilium and Namespace Isolation](../02-network-policy/README.md)
+➡️ [Module 6, Lesson 2 — Network Policy: Cilium and Namespace Isolation](../2.lesson-network-policy/unit-1.md)

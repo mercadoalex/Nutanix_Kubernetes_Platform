@@ -210,7 +210,7 @@ Detailed steps: [Slipstream VirtIO into a Windows ISO](https://www.jeroentielen.
 
 ## Summary checklist
 
-Before proceeding to [Lesson 01 — Getting the NKP OS Image](../01-os-image/README.md), confirm:
+Before proceeding to [Lesson 01 — Getting the NKP OS Image](../3.lesson-os-image/unit-1.md), confirm:
 
 - [ ] CE 2.1 installed on all nodes
 - [ ] Cluster created in Prism Element with Virtual IP and Data Services IP assigned
@@ -223,4 +223,4 @@ Before proceeding to [Lesson 01 — Getting the NKP OS Image](../01-os-image/REA
 
 ## Next steps
 
-➡️ [Lesson 01 — Getting the NKP OS Image](../01-os-image/README.md)
+➡️ [Lesson 01 — Getting the NKP OS Image](../3.lesson-os-image/unit-1.md)

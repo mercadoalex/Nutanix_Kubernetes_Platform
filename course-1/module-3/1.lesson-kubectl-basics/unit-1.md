@@ -394,4 +394,4 @@ kubectl delete pod test --ignore-not-found
 
 ## Next steps
 
-➡️ [Lesson 06 — Bootstrap & Pivot: Building the Management Cluster](../06-bootstrap-pivot/README.md)
+➡️ [Lesson 06 — Bootstrap & Pivot: Building the Management Cluster](../../module-4/1.lesson-bootstrap-pivot/unit-1.md)

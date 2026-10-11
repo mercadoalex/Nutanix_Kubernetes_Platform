@@ -372,4 +372,4 @@ kubectl delete pvc my-pvc
 
 ## Next steps
 
-➡️ [Module 4, Lesson 1 — Bootstrap & Pivot: Building the Management Cluster](../../module-4/01-bootstrap-pivot/README.md)
+➡️ [Module 4, Lesson 1 — Bootstrap & Pivot: Building the Management Cluster](../../module-4/1.lesson-bootstrap-pivot/unit-1.md)

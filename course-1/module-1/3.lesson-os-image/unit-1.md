@@ -100,4 +100,4 @@ Or via the Prism Central UI: the image should appear in the Images list with typ
 
 ## Next Steps
 
-➡️ [Lesson 02 — NKP CLI Bootstrap](../02-bootstrap/README.md)
+➡️ [Lesson 02 — NKP CLI Bootstrap](../../module-2/1.lesson-rke2-bootstrap/unit-1.md)

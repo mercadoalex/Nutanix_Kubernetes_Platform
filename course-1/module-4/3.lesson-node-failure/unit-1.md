@@ -278,4 +278,4 @@ kubectl delete -f failure-test.yaml
 
 ## Next steps
 
-➡️ [Module 5, Lesson 1 — Add-ons Catalog: Deploying Platform Services with Flux](../../module-5/01-addons-catalog/README.md)
+➡️ [Module 5, Lesson 1 — Add-ons Catalog: Deploying Platform Services with Flux](../../module-5/1.lesson-addons-catalog/unit-1.md)

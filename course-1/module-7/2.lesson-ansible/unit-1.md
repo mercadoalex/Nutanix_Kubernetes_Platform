@@ -343,4 +343,4 @@ to connect to Nutanix AHV nodes.
 
 ## Next steps
 
-➡️ [Lesson 15 — Monitoring and Observability](../11-monitoring/README.md)
+➡️ [Back to course index](../../index.md)

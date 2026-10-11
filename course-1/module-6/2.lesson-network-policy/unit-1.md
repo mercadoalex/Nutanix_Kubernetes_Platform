@@ -351,4 +351,4 @@ This is the **least-privilege network model** — nothing communicates unless ex
 
 ## Next steps
 
-➡️ [Module 7, Lesson 1 — GPU: Passthrough, Operator, MIG, and Time-Slicing](../../module-7/01-gpu/README.md)
+➡️ [Module 7, Lesson 1 — GPU: Passthrough, Operator, MIG, and Time-Slicing](../../module-7/1.lesson-gpu/unit-1.md)

@@ -342,4 +342,4 @@ curl -k https://${CONTROL_PLANE_ENDPOINT_IP}:6443/healthz
 
 ## Next steps
 
-➡️ [Lesson 04 — The NKP CLI: kubeconfig, Contexts, and Cluster Access](../04-nkp-cli/README.md)
+➡️ [Lesson 04 — The NKP CLI: kubeconfig, Contexts, and Cluster Access](../4.lesson-nkp-cli/unit-1.md)

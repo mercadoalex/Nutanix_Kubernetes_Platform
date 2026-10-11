@@ -260,4 +260,4 @@ export REGISTRY_MIRROR_URL="http://<jump-host-ip>:80"
 
 ## Next steps
 
-➡️ [Lesson 03 — Creating the Management Cluster on AHV](../03-cluster-create/README.md)
+➡️ [Lesson 03 — Creating the Management Cluster on AHV](../3.lesson-cluster-create/unit-1.md)

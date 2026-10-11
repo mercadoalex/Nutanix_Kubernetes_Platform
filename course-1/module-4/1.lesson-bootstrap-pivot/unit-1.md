@@ -425,4 +425,4 @@ Alternatively, copy the kubeconfig content manually: `cat /etc/rancher/rke2/rke2
 
 ## Next steps
 
-➡️ [Lesson 07 — Node Operations: drain, cordon, taints](../07-node-operations/README.md)
+➡️ [Lesson 07 — Node Operations: drain, cordon, taints](../2.lesson-node-operations/unit-1.md)

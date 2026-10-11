@@ -372,4 +372,4 @@ This is the GitOps guarantee: declared state always wins over manual changes.
 
 ## Next steps
 
-➡️ [Module 5, Lesson 2 — GitOps with Flux: The Full Loop](../02-gitops-flux/README.md)
+➡️ [Module 5, Lesson 2 — GitOps with Flux: The Full Loop](../2.lesson-gitops-flux/unit-1.md)

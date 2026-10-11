@@ -312,4 +312,4 @@ kubectl delete pdb pdb-app
 
 ## Next steps
 
-➡️ [Module 4, Lesson 3 — Node Failure: Simulating and Recovering from a Node Loss](../03-node-failure/README.md)
+➡️ [Module 4, Lesson 3 — Node Failure: Simulating and Recovering from a Node Loss](../3.lesson-node-failure/unit-1.md)

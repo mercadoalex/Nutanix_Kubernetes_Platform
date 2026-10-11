@@ -371,4 +371,4 @@ kubectl get service -n web
 
 ## Next steps
 
-➡️ [Module 5, Lesson 3 — Monitoring: Prometheus and Grafana](../03-monitoring/README.md)
+➡️ [Module 5, Lesson 3 — Monitoring: Prometheus and Grafana](../3.lesson-monitoring/unit-1.md)

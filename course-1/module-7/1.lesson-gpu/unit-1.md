@@ -474,4 +474,4 @@ kubectl describe node worker-01 | grep -A5 "Allocated resources"
 
 ## Next steps
 
-➡️ [Back to Lesson 12 — Node failure](../12-node-failure/README.md)
+➡️ [Module 7, Lesson 2 — Ansible Automation](../2.lesson-ansible/unit-1.md)

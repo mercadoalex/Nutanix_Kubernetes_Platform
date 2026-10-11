@@ -318,4 +318,4 @@ curl -sG 'http://localhost:9090/api/v1/query' \
 
 ## Next steps
 
-➡️ [Module 6, Lesson 1 — RBAC & Policy: ClusterRoles and Gatekeeper](../../module-6/01-rbac-policy/README.md)
+➡️ [Module 6, Lesson 1 — RBAC & Policy: ClusterRoles and Gatekeeper](../../module-6/1.lesson-rbac-policy/unit-1.md)

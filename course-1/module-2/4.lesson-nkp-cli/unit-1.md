@@ -272,4 +272,4 @@ PS1='\u@\h \W $(parse_k8s_context)$ '
 
 ## Next steps
 
-➡️ [Lesson 05 — kubectl Basics: Day-2 Cluster Operations](../05-kubectl-basics/README.md)
+➡️ [Lesson 05 — kubectl Basics: Day-2 Cluster Operations](../../module-3/1.lesson-kubectl-basics/unit-1.md)
