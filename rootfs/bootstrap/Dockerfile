@@ -122,7 +122,10 @@ RUN echo 'source <(kubectl completion bash)' >> /etc/bash.bashrc \
     && echo 'alias k=kubectl'               >> /etc/bash.bashrc
 
 # ── laborant user (required by iximiuz platform) ─────────────────────────────
-RUN useradd -m -u 1000 -s /bin/bash laborant \
+# Ubuntu 24.04 ships with an 'ubuntu' user at UID 1000. Rename it to 'laborant'
+# so the iximiuz platform finds the expected user in /etc/passwd.
+RUN usermod -l laborant -d /home/laborant -m ubuntu \
+    && groupmod -n laborant ubuntu \
     && echo 'laborant ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
 # ── lab files ─────────────────────────────────────────────────────────────────
