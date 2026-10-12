@@ -133,3 +133,5 @@ RUN mkdir -p /home/laborant/labs /root/.kube
 COPY --chown=1000:1000 rootfs/bootstrap/labs/ /home/laborant/labs/
 
 WORKDIR /home/laborant
+
+CMD ["/sbin/init"]
