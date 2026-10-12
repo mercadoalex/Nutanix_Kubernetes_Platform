@@ -30,6 +30,7 @@ bootstrap:
 	@echo "==> Building + pushing nkp-bootstrap (vm1)..."
 	docker buildx build \
 		--platform $(PLATFORM) \
+		--provenance=false \
 		--push \
 		-t $(BOOTSTRAP_IMAGE):$(RELEASE) \
 		-t $(BOOTSTRAP_IMAGE):latest \
@@ -43,6 +44,7 @@ controlplane:
 	@echo "    (build context is rootfs/ root — downloads/rke2/ must exist)"
 	docker buildx build \
 		--platform $(PLATFORM) \
+		--provenance=false \
 		--push \
 		-t $(CONTROLPLANE_IMAGE):$(RELEASE) \
 		-t $(CONTROLPLANE_IMAGE):latest \
@@ -56,6 +58,7 @@ worker:
 	@echo "    (build context is rootfs/ root — downloads/rke2/ must exist)"
 	docker buildx build \
 		--platform $(PLATFORM) \
+		--provenance=false \
 		--push \
 		-t $(WORKER_IMAGE):$(RELEASE) \
 		-t $(WORKER_IMAGE):latest \
