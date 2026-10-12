@@ -67,4 +67,4 @@ COPY --chown=1000:1000 worker/labs/ /home/laborant/labs/
 
 WORKDIR /root
 
-CMD ["/usr/lib/systemd/systemd"]
+CMD ["/sbin/init"]

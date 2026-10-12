@@ -83,4 +83,4 @@ COPY --chown=1000:1000 controlplane/labs/ /home/laborant/labs/
 
 WORKDIR /root
 
-CMD ["/usr/lib/systemd/systemd"]
+CMD ["/sbin/init"]
