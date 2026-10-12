@@ -2,18 +2,18 @@
 #
 # controlplane and worker build contexts are rootfs/ root.
 # Include only what those Dockerfiles actually COPY:
-#   rke2/install.sh + rke2/*.tar.zst  → downloads stage
-#   controlplane/*                    → config + labs for vm2
-#   worker/*                          → config + labs for vm3-5
+#   rke2/install.sh  → install script only (airgap bundles excluded — too large)
+#   controlplane/*   → config + labs for vm2
+#   worker/*         → config + labs for vm3-5
 #
 # Exclude the bootstrap/ tree (158 MB nkp binary) and any other noise.
 
 # ── default: exclude everything ──────────────────────────────────────────────
 *
 
-# rke2 artifacts (needed by both controlplane and worker)
+# rke2 install script only — exclude the 1.7 GB .tar.zst bundles
 !rke2/
-!rke2/**
+!rke2/install.sh
 
 # controlplane-specific files
 !controlplane/

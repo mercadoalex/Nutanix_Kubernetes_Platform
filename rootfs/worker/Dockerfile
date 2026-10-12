@@ -11,9 +11,9 @@
 # ── downloads stage — pre-fetched files copied in (no curl inside QEMU) ──────
 FROM scratch AS downloads
 COPY rke2/install.sh                              /install.sh
-COPY rke2/rke2-images.linux-amd64.tar.zst        /rke2-images.linux-amd64.tar.zst
-COPY rke2/rke2-images-core.linux-amd64.tar.zst   /rke2-images-core.linux-amd64.tar.zst
-COPY rke2/rke2-images-cilium.linux-amd64.tar.zst /rke2-images-cilium.linux-amd64.tar.zst
+# NOTE: airgap image bundles intentionally excluded — the iximiuz playground
+# has full internet access so RKE2 will pull container images at runtime.
+# Bundles are 1.7 GB and would exceed the platform's rootfs bake size limit.
 
 FROM rockylinux/rockylinux:9.7
 
@@ -45,14 +45,6 @@ COPY --from=downloads /install.sh /tmp/rke2-install.sh
 RUN INSTALL_RKE2_VERSION="${RKE2_VERSION}" \
     INSTALL_RKE2_TYPE="agent" \
     sh /tmp/rke2-install.sh && rm /tmp/rke2-install.sh
-
-# ── RKE2 airgap image bundles ────────────────────────────────────────────────
-RUN mkdir -p /var/lib/rancher/rke2/agent/images/
-COPY --from=downloads \
-    /rke2-images.linux-amd64.tar.zst \
-    /rke2-images-core.linux-amd64.tar.zst \
-    /rke2-images-cilium.linux-amd64.tar.zst \
-    /var/lib/rancher/rke2/agent/images/
 
 # ── RKE2 agent config ─────────────────────────────────────────────────────────
 # server URL and token are set at runtime by the student (or lab setup script)
