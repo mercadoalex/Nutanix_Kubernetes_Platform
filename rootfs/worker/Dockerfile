@@ -23,6 +23,7 @@ ARG RKE2_VERSION=v1.34.3+rke2r1
 # ── base packages ─────────────────────────────────────────────────────────────
 RUN dnf install -y epel-release || true
 RUN dnf install -y --setopt=install_weak_deps=False \
+        systemd \
         curl git tmux jq bash-completion \
         vim-minimal less iproute iputils \
     && dnf install -y --setopt=install_weak_deps=False \
@@ -66,4 +67,4 @@ COPY --chown=1000:1000 worker/labs/ /home/laborant/labs/
 
 WORKDIR /root
 
-CMD ["/sbin/init"]
+CMD ["/usr/lib/systemd/systemd"]
