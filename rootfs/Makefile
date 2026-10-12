@@ -28,43 +28,41 @@ all: bootstrap controlplane worker
 
 bootstrap:
 	@echo "==> Building + pushing nkp-bootstrap (vm1)..."
-	docker buildx build \
+	docker build \
 		--platform $(PLATFORM) \
-		--provenance=false \
-		--push \
 		-t $(BOOTSTRAP_IMAGE):$(RELEASE) \
 		-t $(BOOTSTRAP_IMAGE):latest \
 		--progress=plain \
 		-f bootstrap/Dockerfile \
 		..
+	docker push $(BOOTSTRAP_IMAGE):$(RELEASE)
+	docker push $(BOOTSTRAP_IMAGE):latest
 	@echo "✓ $(BOOTSTRAP_IMAGE):latest"
 
 controlplane:
 	@echo "==> Building + pushing nkp-controlplane (vm2)..."
-	@echo "    (build context is rootfs/ root — downloads/rke2/ must exist)"
-	docker buildx build \
+	docker build \
 		--platform $(PLATFORM) \
-		--provenance=false \
-		--push \
 		-t $(CONTROLPLANE_IMAGE):$(RELEASE) \
 		-t $(CONTROLPLANE_IMAGE):latest \
 		--progress=plain \
 		-f controlplane/Dockerfile \
 		.
+	docker push $(CONTROLPLANE_IMAGE):$(RELEASE)
+	docker push $(CONTROLPLANE_IMAGE):latest
 	@echo "✓ $(CONTROLPLANE_IMAGE):latest"
 
 worker:
 	@echo "==> Building + pushing nkp-worker (vm3–5)..."
-	@echo "    (build context is rootfs/ root — downloads/rke2/ must exist)"
-	docker buildx build \
+	docker build \
 		--platform $(PLATFORM) \
-		--provenance=false \
-		--push \
 		-t $(WORKER_IMAGE):$(RELEASE) \
 		-t $(WORKER_IMAGE):latest \
 		--progress=plain \
 		-f worker/Dockerfile \
 		.
+	docker push $(WORKER_IMAGE):$(RELEASE)
+	docker push $(WORKER_IMAGE):latest
 	@echo "✓ $(WORKER_IMAGE):latest"
 
 build-all:
