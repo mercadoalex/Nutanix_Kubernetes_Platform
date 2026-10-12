@@ -121,6 +121,10 @@ RUN echo 'source <(kubectl completion bash)' >> /etc/bash.bashrc \
     && echo 'source <(helm completion bash)' >> /etc/bash.bashrc \
     && echo 'alias k=kubectl'               >> /etc/bash.bashrc
 
+# ── laborant user (required by iximiuz platform) ─────────────────────────────
+RUN useradd -m -u 1000 -s /bin/bash laborant \
+    && echo 'laborant ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+
 # ── lab files ─────────────────────────────────────────────────────────────────
 RUN mkdir -p /home/laborant/labs /root/.kube
 COPY --chown=1000:1000 rootfs/bootstrap/labs/ /home/laborant/labs/

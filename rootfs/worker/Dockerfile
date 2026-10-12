@@ -64,6 +64,10 @@ RUN echo 'export PATH=$PATH:/var/lib/rancher/rke2/bin' >> /etc/bashrc \
     && echo 'alias crictl="crictl --runtime-endpoint unix:///run/k3s/containerd/containerd.sock"' \
        >> /etc/bashrc
 
+# ── laborant user (required by iximiuz platform) ─────────────────────────────
+RUN useradd -m -u 1000 -s /bin/bash laborant \
+    && echo 'laborant ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+
 # ── lab files ─────────────────────────────────────────────────────────────────
 RUN mkdir -p /home/laborant/labs
 COPY --chown=1000:1000 worker/labs/ /home/laborant/labs/

@@ -82,6 +82,10 @@ RUN echo 'export KUBECONFIG=/etc/rancher/rke2/rke2.yaml' >> /etc/bashrc \
     && echo 'source <(kubectl completion bash)' >> /etc/bashrc \
     && echo 'alias k=kubectl' >> /etc/bashrc
 
+# ── laborant user (required by iximiuz platform) ─────────────────────────────
+RUN useradd -m -u 1000 -s /bin/bash laborant \
+    && echo 'laborant ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+
 # ── lab files ─────────────────────────────────────────────────────────────────
 RUN mkdir -p /home/laborant/labs
 COPY --chown=1000:1000 controlplane/labs/ /home/laborant/labs/
