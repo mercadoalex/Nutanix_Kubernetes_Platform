@@ -92,6 +92,18 @@ check_image() {
         pass "No security.selinux xattrs"
     fi
 
+    # ── 2b. sshd present and enabled ─────────────────────────────────────────
+    echo "  [2b] sshd..."
+    sshd_bin=$(docker run --rm --platform linux/amd64 "${ref}" \
+        bash -c "ls /usr/sbin/sshd 2>/dev/null && echo OK || echo MISSING" 2>/dev/null || echo "MISSING")
+    sshd_cfg=$(docker run --rm --platform linux/amd64 "${ref}" \
+        bash -c "ls /etc/ssh/sshd_config 2>/dev/null && echo OK || echo MISSING" 2>/dev/null || echo "MISSING")
+    if [[ "$sshd_bin" == *"OK"* && "$sshd_cfg" == *"OK"* ]]; then
+        pass "sshd binary and config present"
+    else
+        fail "sshd missing (bin=$sshd_bin cfg=$sshd_cfg) — iximiuz platform requires sshd on port 22"
+    fi
+
     # ── 3. Uncompressed image size ────────────────────────────────────────────
     echo "  [3] Uncompressed image size..."
     size_bytes=$(docker image inspect "${ref}" --format '{{.Size}}' 2>/dev/null || echo 0)

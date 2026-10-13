@@ -24,6 +24,7 @@ ARG RKE2_VERSION=v1.34.3+rke2r1
 RUN dnf install -y epel-release || true
 RUN dnf install -y --setopt=install_weak_deps=False \
         systemd \
+        openssh-server \
         curl git tmux jq bash-completion \
         vim-minimal less iproute iputils \
     && dnf install -y --setopt=install_weak_deps=False \
@@ -33,6 +34,13 @@ RUN dnf install -y --setopt=install_weak_deps=False \
     && dnf install -y --setopt=install_weak_deps=False libseccomp || true \
     && dnf install -y --setopt=install_weak_deps=False nfs-utils || true \
     && dnf clean all
+
+# ── sshd setup (required by iximiuz platform — bake tool SSHes in to verify liveness) ──
+RUN ssh-keygen -A \
+    && sed -i 's/^#\?PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config \
+    && sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config \
+    && systemctl enable sshd 2>/dev/null || ln -sf /usr/lib/systemd/system/sshd.service \
+        /etc/systemd/system/multi-user.target.wants/sshd.service
 
 # ── disable SELinux (iximiuz ext4 bake cannot handle xattrs) ─────────────────
 RUN echo 'SELINUX=disabled' > /etc/selinux/config \
