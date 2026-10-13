@@ -38,6 +38,9 @@ RUN dnf install -y --setopt=install_weak_deps=False \
 RUN echo 'SELINUX=disabled' > /etc/selinux/config \
     && echo 'SELINUXTYPE=targeted' >> /etc/selinux/config
 
+# ── remove dangling .build-id symlinks (iximiuz bake fails on broken symlinks)
+RUN find /usr/lib/.build-id -xtype l -delete 2>/dev/null || true
+
 # ── enable iscsid (required by Longhorn) ──────────────────────────────────────
 # systemctl doesn't work inside a Docker build — create the symlink directly
 RUN mkdir -p /etc/systemd/system/multi-user.target.wants && \
@@ -49,6 +52,9 @@ COPY --from=downloads /install.sh /tmp/rke2-install.sh
 RUN INSTALL_RKE2_VERSION="${RKE2_VERSION}" \
     INSTALL_RKE2_TYPE="agent" \
     sh /tmp/rke2-install.sh && rm /tmp/rke2-install.sh
+
+# ── remove dangling .build-id symlinks introduced by RKE2 RPM install ─────────
+RUN find /usr/lib/.build-id -xtype l -delete 2>/dev/null || true
 
 # ── RKE2 agent config ─────────────────────────────────────────────────────────
 # server URL and token are set at runtime by the student (or lab setup script)
