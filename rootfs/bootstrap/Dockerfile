@@ -3,9 +3,10 @@
 #
 # Base: Ubuntu 24.04 (matches iximious ubuntu-24-04 catalog image)
 # Role: Runs the NKP Bootstrap Cluster (kind), hosts operator tooling
-#       (nkp CLI, kubectl, helm, flux, ansible). Does NOT run RKE2.
+#       (nkp CLI, kubectl, helm, flux). Does NOT run RKE2.
 #       k9s is NOT pre-installed (saves 91 MB) — install at runtime if needed:
 #         curl -fsSL https://github.com/derailed/k9s/releases/latest/download/k9s_Linux_amd64.tar.gz | tar xz -C /usr/local/bin k9s
+#       ansible is NOT pre-installed — no course content uses it yet.
 #
 # Build: run from rootfs/ root so downloads/bootstrap/ is in context
 #   cd rootfs && bash bootstrap/build.sh
@@ -59,15 +60,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         netcat-openbsd \
         socat \
         openssh-client \
-        python3 \
-        python3-pip \
-        sshpass \
     && rm -rf /var/lib/apt/lists/* \
     && rm -rf /usr/share/doc /usr/share/man /usr/share/info \
     && find / -xdev -xtype l -delete 2>/dev/null || true
-
-# ── Ansible (pip — no practical binary alternative) ───────────────────────────
-RUN pip3 install --no-cache-dir --break-system-packages ansible
 
 # ── Docker CE (apt repo — only remaining online step) ─────────────────────────
 RUN install -m 0755 -d /etc/apt/keyrings \
