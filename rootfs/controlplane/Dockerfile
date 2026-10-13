@@ -71,9 +71,9 @@ RUN INSTALL_RKE2_VERSION="${RKE2_VERSION}" \
 #   - dangling symlinks
 #   - hardlinks (Rocky RPMs create thousands via .build-id and terminfo)
 #   - sockets/pipes/devices (gpg-agent sockets left by RPM %post scriptlets)
-RUN find / -xdev -xtype l -delete 2>/dev/null || true \
-    && find / -xdev \( -type s -o -type p -o -type b -o -type c \) -delete 2>/dev/null || true \
-    && find /usr/share /usr/lib/.build-id -xdev -type f -links +1 2>/dev/null | while read f; do \
+RUN find /usr/lib/.build-id /usr/share/doc /usr/share/man /run -xtype l -delete 2>/dev/null || true \
+    && find /run /tmp /var/run -maxdepth 5 \( -type s -o -type p -o -type b -o -type c \) -delete 2>/dev/null || true \
+    && find /usr/share /usr/lib/.build-id -type f -links +1 2>/dev/null | while read f; do \
         cp -a "$f" /tmp/_hl_break && mv /tmp/_hl_break "$f" || true; \
        done
 
