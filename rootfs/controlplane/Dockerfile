@@ -42,14 +42,14 @@ RUN dnf install -y --setopt=install_weak_deps=False \
 RUN echo 'SELINUX=disabled' > /etc/selinux/config \
     && echo 'SELINUXTYPE=targeted' >> /etc/selinux/config
 
-# ── remove dangling .build-id symlinks (iximiuz bake fails on broken symlinks)
-RUN find /usr/lib/.build-id -xtype l -delete 2>/dev/null || true
-
 # ── enable iscsid (required by Longhorn) ──────────────────────────────────────
-# systemctl doesn't work inside a Docker build — create the symlink directly
-RUN mkdir -p /etc/systemd/system/multi-user.target.wants && \
-    ln -sf /usr/lib/systemd/system/iscsid.service \
-        /etc/systemd/system/multi-user.target.wants/iscsid.service
+# Only create the symlink if the service unit actually exists (iscsi-initiator-utils
+# install is best-effort and may be absent on some base images).
+RUN if [ -f /usr/lib/systemd/system/iscsid.service ]; then \
+        mkdir -p /etc/systemd/system/multi-user.target.wants && \
+        ln -sf /usr/lib/systemd/system/iscsid.service \
+            /etc/systemd/system/multi-user.target.wants/iscsid.service; \
+    fi
 
 # ── kubectl (standalone, for pre-flight use before RKE2 is running) ──────────
 RUN curl -fsSL "https://dl.k8s.io/release/v${KUBECTL_VERSION}/bin/linux/amd64/kubectl" \
@@ -65,8 +65,8 @@ RUN INSTALL_RKE2_VERSION="${RKE2_VERSION}" \
     INSTALL_RKE2_TYPE="server" \
     sh /tmp/rke2-install.sh && rm /tmp/rke2-install.sh
 
-# ── remove dangling .build-id symlinks introduced by RKE2 RPM install ─────────
-RUN find /usr/lib/.build-id -xtype l -delete 2>/dev/null || true
+# ── remove ALL dangling symlinks (catches .build-id, docs, and anything else) ──
+RUN find / -xdev -xtype l -delete 2>/dev/null || true
 
 # ── RKE2 server config ────────────────────────────────────────────────────────
 # Writes the default server config. The token is set at runtime by the lab

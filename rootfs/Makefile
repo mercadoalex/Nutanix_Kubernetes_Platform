@@ -22,7 +22,7 @@ BOOTSTRAP_IMAGE    := $(REGISTRY)/nkp-bootstrap
 CONTROLPLANE_IMAGE := $(REGISTRY)/nkp-controlplane
 WORKER_IMAGE       := $(REGISTRY)/nkp-worker
 
-.PHONY: all bootstrap controlplane worker build-all clean login help
+.PHONY: all bootstrap controlplane worker build-all check clean login help
 
 all: bootstrap controlplane worker
 
@@ -35,6 +35,7 @@ bootstrap:
 		--progress=plain \
 		-f bootstrap/Dockerfile \
 		..
+	@bash check-bake.sh nkp-bootstrap
 	docker push $(BOOTSTRAP_IMAGE):$(RELEASE)
 	docker push $(BOOTSTRAP_IMAGE):latest
 	@echo "✓ $(BOOTSTRAP_IMAGE):latest"
@@ -48,6 +49,7 @@ controlplane:
 		--progress=plain \
 		-f controlplane/Dockerfile \
 		.
+	@bash check-bake.sh nkp-controlplane
 	docker push $(CONTROLPLANE_IMAGE):$(RELEASE)
 	docker push $(CONTROLPLANE_IMAGE):latest
 	@echo "✓ $(CONTROLPLANE_IMAGE):latest"
@@ -61,9 +63,13 @@ worker:
 		--progress=plain \
 		-f worker/Dockerfile \
 		.
+	@bash check-bake.sh nkp-worker
 	docker push $(WORKER_IMAGE):$(RELEASE)
 	docker push $(WORKER_IMAGE):latest
 	@echo "✓ $(WORKER_IMAGE):latest"
+
+check:
+	@bash check-bake.sh all
 
 build-all:
 	@echo "==> Building all images (local only, no push)..."

@@ -62,7 +62,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         python3 \
         python3-pip \
         sshpass \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /usr/share/doc /usr/share/man /usr/share/info \
+    && find / -xdev -xtype l -delete 2>/dev/null || true
 
 # ── Ansible (pip — no practical binary alternative) ───────────────────────────
 RUN pip3 install --no-cache-dir --break-system-packages ansible
@@ -127,6 +129,9 @@ RUN echo 'source <(kubectl completion bash)' >> /etc/bash.bashrc \
 RUN usermod -l laborant -d /home/laborant -m ubuntu \
     && groupmod -n laborant ubuntu \
     && echo 'laborant ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+
+# ── remove ALL dangling symlinks (catches doc, apt, anything else) ────────────
+RUN find / -xdev -xtype l -delete 2>/dev/null || true
 
 # ── lab files ─────────────────────────────────────────────────────────────────
 RUN mkdir -p /home/laborant/labs /root/.kube
