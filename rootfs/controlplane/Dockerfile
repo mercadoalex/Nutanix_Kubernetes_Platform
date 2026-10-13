@@ -68,11 +68,11 @@ RUN INSTALL_RKE2_VERSION="${RKE2_VERSION}" \
 
 # ── sanitize filesystem for iximiuz ext4 bake ────────────────────────────────
 # Remove anything the bake tool cannot represent in a flat ext4 image:
-#   - dangling symlinks
-#   - hardlinks (Rocky RPMs create thousands via .build-id and terminfo)
-#   - sockets/pipes/devices (gpg-agent sockets left by RPM %post scriptlets)
-RUN find /usr/lib/.build-id /usr/share/doc /usr/share/man /run -xtype l -delete 2>/dev/null || true \
-    && find /run /tmp /var/run -maxdepth 5 \( -type s -o -type p -o -type b -o -type c \) -delete 2>/dev/null || true \
+#   - hardlinks in /usr/share (terminfo, zoneinfo, gdb auto-load)
+#   - sockets/pipes left in /run by RPM %post scriptlets
+# NOTE: do NOT delete dangling symlinks globally — /usr/lib64 has valid symlinks
+#   that appear dangling inside the build container but are needed at runtime.
+RUN find /run /tmp /var/run -maxdepth 5 \( -type s -o -type p \) -delete 2>/dev/null || true \
     && find /usr/share /usr/lib/.build-id -type f -links +1 2>/dev/null | while read f; do \
         cp -a "$f" /tmp/_hl_break && mv /tmp/_hl_break "$f" || true; \
        done
