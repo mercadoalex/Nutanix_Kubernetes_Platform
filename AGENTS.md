@@ -158,6 +158,52 @@ Each VM boots its own purpose-built rootfs. The cluster is **not** pre-started �
 | `nkp-controlplane.ext4` | vm2 | RKE2 server binary + images, Rocky 9.7 userland, NKP node artifacts |
 | `nkp-worker.ext4` | vm3–5 | RKE2 agent binary + images, Rocky 9.7 userland |
 
+## rootfs Build Rules — iximious ext4 Bake Compatibility
+
+The iximious platform converts OCI images to raw ext4 rootfs images at playground start time (the `RootfsBaked` condition). This bake step is strict — certain filesystem constructs that are valid in a container image will cause `RootfsBaked: False` and abort the playground.
+
+### What the bake tool cannot handle
+
+| Filesystem construct | Cause in Rocky Linux images | Fix applied in Dockerfiles |
+|---|---|---|
+| **Dangling symlinks** | RPM `.build-id` symlinks + doc symlinks pointing to stripped files | `find / -xdev -xtype l -delete` |
+| **Unix sockets / pipes / device files** | `gpg-agent` sockets left by RPM `%post` scriptlets during `rke2-selinux` / `container-selinux` install | `find / -xdev \( -type s -o -type p -o -type b -o -type c \) -delete` |
+| **Hardlinks** | Rocky RPM packages (terminfo, zoneinfo, gdb auto-load) create thousands of hardlinks | `find / -xdev -type f -links +1 | while read f; do cp -a "$f" /tmp/_hl && mv /tmp/_hl "$f"; done` |
+| **SELinux xattrs** | `selinux-policy-targeted` + `container-selinux` write xattrs during `%post` | `SELINUX=disabled` in `/etc/selinux/config` (prevents xattrs at runtime; build-time xattrs not written in Docker) |
+
+> ⚠️ Ubuntu-based images (vm1 bootstrap) do not have these issues — apt packages do not create hardlinks, sockets, or SELinux xattrs. The Rocky Linux images (vm2–vm5) require the full sanitization step.
+
+### Mandatory sanitization RUN step (Rocky images only)
+
+Every Rocky-based Dockerfile must end with this block **after all package installs**:
+
+```dockerfile
+# ── sanitize filesystem for iximiuz ext4 bake ────────────────────────────────
+# Remove anything the bake tool cannot represent in a flat ext4 image:
+#   - dangling symlinks
+#   - hardlinks (Rocky RPMs create thousands via .build-id and terminfo)
+#   - sockets/pipes/devices (gpg-agent sockets left by RPM %post scriptlets)
+RUN find / -xdev -xtype l -delete 2>/dev/null || true \
+    && find / -xdev \( -type s -o -type p -o -type b -o -type c \) -delete 2>/dev/null || true \
+    && find / -xdev -type f -links +1 2>/dev/null | while read f; do \
+        cp -a "$f" /tmp/_hl_break && mv /tmp/_hl_break "$f" || true; \
+       done
+```
+
+### Pre-flight check before every push
+
+Run `bash rootfs/check-bake.sh all` before pushing any image. This script catches all four failure categories locally — **never push without running it first**. It is also wired into `make controlplane`, `make worker`, and `make bootstrap` and will block the push if any check fails.
+
+```bash
+cd rootfs && bash check-bake.sh all
+# or via make (runs automatically before push):
+cd rootfs && make controlplane worker
+```
+
+### Why the bake fails simultaneously on all Rocky VMs
+
+All Rocky VMs fail `RootfsBaked` at the **exact same nanosecond** — this is a deterministic pre-scan rejection at the OCI layer level, not a per-file scan. The bake tool inspects the image before extracting it. Any of the four constructs above triggers immediate rejection of the entire image.
+
 ## Conventions
 
 - Each lesson folder contains a `README.md` with the lesson body.
