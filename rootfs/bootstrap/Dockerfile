@@ -3,7 +3,9 @@
 #
 # Base: Ubuntu 24.04 (matches iximious ubuntu-24-04 catalog image)
 # Role: Runs the NKP Bootstrap Cluster (kind), hosts operator tooling
-#       (nkp CLI, kubectl, helm, flux, k9s, ansible). Does NOT run RKE2.
+#       (nkp CLI, kubectl, helm, flux, ansible). Does NOT run RKE2.
+#       k9s is NOT pre-installed (saves 91 MB) — install at runtime if needed:
+#         curl -fsSL https://github.com/derailed/k9s/releases/latest/download/k9s_Linux_amd64.tar.gz | tar xz -C /usr/local/bin k9s
 #
 # Build: run from rootfs/ root so downloads/bootstrap/ is in context
 #   cd rootfs && bash bootstrap/build.sh
@@ -23,7 +25,6 @@ COPY downloads/bootstrap/kind                              /kind
 COPY downloads/bootstrap/nkp_v2.17.1_linux_amd64.tar.gz   /nkp.tar.gz
 COPY downloads/bootstrap/helm-v3.17.3-linux-amd64.tar.gz  /helm.tar.gz
 COPY downloads/bootstrap/flux_2.5.1_linux_amd64.tar.gz    /flux.tar.gz
-COPY downloads/bootstrap/k9s_Linux_amd64.tar.gz            /k9s.tar.gz
 
 # ── main image ────────────────────────────────────────────────────────────────
 FROM ubuntu:${UBUNTU_VERSION}
@@ -34,7 +35,6 @@ ARG KUBECTL_VERSION=1.34.3
 ARG HELM_VERSION=3.17.3
 ARG FLUX_VERSION=2.5.1
 ARG KIND_VERSION=0.27.0
-ARG K9S_VERSION=0.32.5
 # Docker CE installed from upstream apt repo — internet required for apt at build time
 # (apt packages are not practical to pre-stage; Docker is the only online dependency)
 ARG DOCKER_VERSION=5:29.0.3-1~ubuntu.24.04~noble
@@ -105,11 +105,6 @@ RUN tar xz -C /usr/local/bin flux < /tmp/flux.tar.gz \
 # ── kind (from downloads stage) ───────────────────────────────────────────────
 COPY --from=downloads /kind /usr/local/bin/kind
 RUN chmod +x /usr/local/bin/kind
-
-# ── k9s (from downloads stage) ────────────────────────────────────────────────
-COPY --from=downloads /k9s.tar.gz /tmp/k9s.tar.gz
-RUN tar xz -C /usr/local/bin k9s < /tmp/k9s.tar.gz \
-    && rm /tmp/k9s.tar.gz
 
 # ── nkp CLI (from downloads stage) ───────────────────────────────────────────
 COPY --from=downloads /nkp.tar.gz /tmp/nkp.tar.gz
