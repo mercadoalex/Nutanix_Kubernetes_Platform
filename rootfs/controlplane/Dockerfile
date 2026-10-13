@@ -39,13 +39,6 @@ RUN dnf install -y --setopt=install_weak_deps=False \
     && dnf install -y --setopt=install_weak_deps=False nfs-utils || true \
     && dnf clean all
 
-# ── sshd setup (required by iximiuz platform — bake tool SSHes in to verify liveness) ──
-RUN ssh-keygen -A \
-    && sed -i 's/^#\?PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config \
-    && sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config \
-    && systemctl enable sshd 2>/dev/null || ln -sf /usr/lib/systemd/system/sshd.service \
-        /etc/systemd/system/multi-user.target.wants/sshd.service
-
 # ── disable SELinux (iximiuz ext4 bake cannot handle xattrs) ─────────────────
 RUN echo 'SELINUX=disabled' > /etc/selinux/config \
     && echo 'SELINUXTYPE=targeted' >> /etc/selinux/config
@@ -83,6 +76,14 @@ RUN find / -xdev -xtype l -delete 2>/dev/null || true \
     && find / -xdev -type f -links +1 2>/dev/null | while read f; do \
         cp -a "$f" /tmp/_hl_break && mv /tmp/_hl_break "$f" || true; \
        done
+
+# ── sshd setup (required by iximiuz platform — bake tool SSHes in to verify liveness) ──
+# Must run AFTER sanitization — the hardlink-breaker would otherwise corrupt the sshd binary.
+RUN ssh-keygen -A \
+    && sed -i 's/^#\?PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config \
+    && sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config \
+    && ln -sf /usr/lib/systemd/system/sshd.service \
+        /etc/systemd/system/multi-user.target.wants/sshd.service
 
 # ── RKE2 server config ────────────────────────────────────────────────────────
 # Writes the default server config. The token is set at runtime by the lab
