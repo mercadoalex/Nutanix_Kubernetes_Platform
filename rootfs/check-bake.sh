@@ -51,6 +51,18 @@ check_image() {
         pass "No dangling symlinks"
     fi
 
+    # ── 1b. Hardlinks ─────────────────────────────────────────────────────────
+    echo "  [1b] Hardlinks..."
+    hardlinks=$(docker run --rm --platform linux/amd64 "${ref}" \
+        bash -c "find / -xdev -type f -links +1 2>/dev/null | wc -l" 2>/dev/null || echo "ERROR")
+    if [[ "$hardlinks" == "ERROR" ]]; then
+        fail "Could not check hardlinks"
+    elif [[ "$hardlinks" -gt 0 ]]; then
+        fail "${hardlinks} hardlinks found (iximiuz bake cannot handle hardlinks)"
+    else
+        pass "No hardlinks"
+    fi
+
     # ── 2. Files with SELinux xattrs ─────────────────────────────────────────
     echo "  [2] SELinux xattrs on filesystem..."
     xattr_count=$(docker run --rm --platform linux/amd64 "${ref}" \

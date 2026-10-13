@@ -52,8 +52,13 @@ RUN INSTALL_RKE2_VERSION="${RKE2_VERSION}" \
     INSTALL_RKE2_TYPE="agent" \
     sh /tmp/rke2-install.sh && rm /tmp/rke2-install.sh
 
-# ── remove ALL dangling symlinks (catches .build-id, docs, and anything else) ──
-RUN find / -xdev -xtype l -delete 2>/dev/null || true
+# ── remove ALL dangling symlinks and break hardlinks (iximiuz ext4 bake) ───────
+# Dangling symlinks and hardlinks both cause RootfsBaked: False failures.
+RUN find / -xdev -xtype l -delete 2>/dev/null || true \
+    && find / -xdev -type f -links +1 \
+        -exec cp --remove-destination {} /tmp/_hl_break \; \
+        -exec mv /tmp/_hl_break {} \; \
+        2>/dev/null || true
 
 # ── RKE2 agent config ─────────────────────────────────────────────────────────
 # server URL and token are set at runtime by the student (or lab setup script)
