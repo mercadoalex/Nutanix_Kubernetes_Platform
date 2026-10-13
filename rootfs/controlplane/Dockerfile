@@ -72,10 +72,9 @@ RUN INSTALL_RKE2_VERSION="${RKE2_VERSION}" \
 #   - sockets/pipes/devices (gpg-agent sockets left by RPM %post scriptlets)
 RUN find / -xdev -xtype l -delete 2>/dev/null || true \
     && find / -xdev \( -type s -o -type p -o -type b -o -type c \) -delete 2>/dev/null || true \
-    && find / -xdev -type f -links +1 \
-        -exec cp --remove-destination {} /tmp/_hl_break \; \
-        -exec mv /tmp/_hl_break {} \; \
-        2>/dev/null || true
+    && find / -xdev -type f -links +1 2>/dev/null | while read f; do \
+        cp -a "$f" /tmp/_hl_break && mv /tmp/_hl_break "$f" || true; \
+       done
 
 # ── RKE2 server config ────────────────────────────────────────────────────────
 # Writes the default server config. The token is set at runtime by the lab
