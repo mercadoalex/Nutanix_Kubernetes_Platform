@@ -51,8 +51,23 @@ check_image() {
         pass "No dangling symlinks"
     fi
 
-    # ── 1b. Hardlinks ─────────────────────────────────────────────────────────
-    echo "  [1b] Hardlinks..."
+    # ── 1b. Special files (sockets, pipes, devices) ───────────────────────────
+    echo "  [1b] Special files (sockets/pipes/devices)..."
+    special=$(docker run --rm --platform linux/amd64 "${ref}" \
+        bash -c "find / -xdev \( -type s -o -type p -o -type b -o -type c \) 2>/dev/null | wc -l" \
+        2>/dev/null || echo "0")
+    special="${special//[^0-9]/}"; special="${special:-0}"
+    if [[ "$special" -gt 0 ]]; then
+        fail "${special} special files found (sockets/pipes/devices — iximiuz bake cannot handle these)"
+        docker run --rm --platform linux/amd64 "${ref}" \
+            bash -c "find / -xdev \( -type s -o -type p -o -type b -o -type c \) 2>/dev/null" \
+            2>/dev/null | head -10 | sed 's/^/      /'
+    else
+        pass "No special files"
+    fi
+
+    # ── 1c. Hardlinks ─────────────────────────────────────────────────────────
+    echo "  [1c] Hardlinks..."
     hardlinks=$(docker run --rm --platform linux/amd64 "${ref}" \
         bash -c "find / -xdev -type f -links +1 2>/dev/null | wc -l" 2>/dev/null || echo "ERROR")
     if [[ "$hardlinks" == "ERROR" ]]; then
