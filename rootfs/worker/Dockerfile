@@ -30,10 +30,13 @@ RUN dnf install -y --setopt=install_weak_deps=False \
         bind-utils nmap-ncat socat \
         iptables nftables \
     && dnf install -y --setopt=install_weak_deps=False iscsi-initiator-utils || true \
-    && dnf install -y --setopt=install_weak_deps=False container-selinux || true \
     && dnf install -y --setopt=install_weak_deps=False libseccomp || true \
     && dnf install -y --setopt=install_weak_deps=False nfs-utils || true \
     && dnf clean all
+
+# ── disable SELinux (iximiuz ext4 bake cannot handle xattrs) ─────────────────
+RUN echo 'SELINUX=disabled' > /etc/selinux/config \
+    && echo 'SELINUXTYPE=targeted' >> /etc/selinux/config
 
 # ── enable iscsid (required by Longhorn) ──────────────────────────────────────
 # systemctl doesn't work inside a Docker build — create the symlink directly
