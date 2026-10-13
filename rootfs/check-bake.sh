@@ -69,7 +69,8 @@ check_image() {
     echo "  [3] Uncompressed image size..."
     size_bytes=$(docker image inspect "${ref}" --format '{{.Size}}' 2>/dev/null || echo 0)
     size_mb=$(( size_bytes / 1024 / 1024 ))
-    limit_mb=1400
+    # Bootstrap (Ubuntu + Docker + nkp CLI) is legitimately larger — iximious confirmed OK at ~1.7 GB
+    if [[ "$image" == "nkp-bootstrap" ]]; then limit_mb=2000; else limit_mb=1400; fi
     if [[ "$size_mb" -gt "$limit_mb" ]]; then
         fail "Image is ${size_mb} MB — exceeds iximious bake limit of ~${limit_mb} MB"
     else
