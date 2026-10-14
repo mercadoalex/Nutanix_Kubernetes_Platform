@@ -26,12 +26,14 @@ ARG KUBECTL_VERSION=1.34.3
 
 # ── base packages ─────────────────────────────────────────────────────────────
 RUN dnf install -y epel-release || true
-RUN dnf install -y --setopt=install_weak_deps=False \
+# --allowerasing replaces curl-minimal (pre-installed in rockylinux:9.7 base)
+# with curl; without it the conflict aborts the entire transaction and
+# openssh-server (and other packages) silently never get installed.
+RUN dnf install -y --setopt=install_weak_deps=False --allowerasing \
         systemd \
         openssh-server \
         curl git tmux jq bash-completion \
         vim-minimal less iproute iputils \
-    && dnf install -y --setopt=install_weak_deps=False \
         bind-utils nmap-ncat socat \
         iptables nftables \
     && dnf install -y --setopt=install_weak_deps=False iscsi-initiator-utils || true \
@@ -67,15 +69,20 @@ RUN INSTALL_RKE2_VERSION="${RKE2_VERSION}" \
     sh /tmp/rke2-install.sh && rm /tmp/rke2-install.sh
 
 # ── sanitize filesystem for iximiuz ext4 bake ────────────────────────────────
-# Remove anything the bake tool cannot represent in a flat ext4 image:
-#   - hardlinks in /usr/share (terminfo, zoneinfo, gdb auto-load)
-#   - sockets/pipes left in /run by RPM %post scriptlets
-# NOTE: do NOT delete dangling symlinks globally — /usr/lib64 has valid symlinks
-#   that appear dangling inside the build container but are needed at runtime.
+# 1. Delete sockets/pipes left by RPM %post scriptlets.
+# 2. Break ALL hardlinks under /usr — covers terminfo, zoneinfo, Python pyc,
+#    crypto-policies, gcc/gdb share dirs, perl, getconf, and anything else
+#    RPM packages create.  The cp-a+mv pattern is safe: it never touches
+#    /usr/bin or /usr/sbin executables as hardlinked regulars (those have
+#    link-count 1 after RPM install).
+# 3. Delete dangling symlinks — .build-id entries for absent cross-arch
+#    binaries (ppc64le, s390x, aarch64), orphaned alternatives entries, etc.
 RUN find /run /tmp /var/run -maxdepth 5 \( -type s -o -type p \) -delete 2>/dev/null || true \
-    && find /usr/share /usr/lib/.build-id -type f -links +1 2>/dev/null | while read f; do \
-        cp -a "$f" /tmp/_hl_break && mv /tmp/_hl_break "$f" || true; \
-       done
+    && find /usr -xdev -type f -links +1 2>/dev/null | while IFS= read -r f; do \
+        [ -n "$f" ] && [ -f "$f" ] || continue; \
+        cp -a "$f" /tmp/_hl_break 2>/dev/null && mv -f /tmp/_hl_break "$f" 2>/dev/null || true; \
+       done \
+    && find / -xdev -xtype l -delete 2>/dev/null || true
 
 # ── sshd setup (required by iximiuz platform — bake tool SSHes in to verify liveness) ──
 # Must run AFTER sanitization — the hardlink-breaker would otherwise corrupt the sshd binary.
