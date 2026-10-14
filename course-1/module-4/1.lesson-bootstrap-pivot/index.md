@@ -19,7 +19,7 @@ tagz:
   - capi
   - kind
 playground:
-  name: flexbox
+  name: nkp-lab-b2fa17d3
 tasks:
   verify_rke2_server:
     machine: controlplane

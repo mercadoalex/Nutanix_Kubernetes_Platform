@@ -16,7 +16,7 @@ tagz:
   - etcd
   - kubeconfig
 playground:
-  name: flexbox
+  name: nkp-lab-b2fa17d3
 tasks:
   verify_rke2_running:
     machine: controlplane

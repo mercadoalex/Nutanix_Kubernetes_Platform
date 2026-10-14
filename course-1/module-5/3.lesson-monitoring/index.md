@@ -19,7 +19,7 @@ tagz:
   - promql
   - monitoring
 playground:
-  name: flexbox
+  name: nkp-lab-b2fa17d3
 tasks:
   verify_prometheus_running:
     machine: bootstrap

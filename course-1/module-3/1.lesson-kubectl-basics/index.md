@@ -17,7 +17,7 @@ tagz:
   - events
   - troubleshooting
 playground:
-  name: flexbox
+  name: nkp-lab-b2fa17d3
 tasks:
   verify_kubectl_works:
     machine: bootstrap

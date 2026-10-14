@@ -18,7 +18,7 @@ tagz:
   - kustomization
   - drift-detection
 playground:
-  name: flexbox
+  name: nkp-lab-b2fa17d3
 tasks:
   verify_gitrepo_ready:
     machine: bootstrap
