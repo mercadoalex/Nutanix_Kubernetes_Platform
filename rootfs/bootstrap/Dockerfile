@@ -43,6 +43,8 @@ ARG DOCKER_VERSION=5:29.0.3-1~ubuntu.24.04~noble
 # ── base packages ─────────────────────────────────────────────────────────────
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
+        systemd \
+        systemd-sysv \
         ca-certificates \
         curl \
         gnupg \
@@ -60,9 +62,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         netcat-openbsd \
         socat \
         openssh-client \
-    && rm -rf /var/lib/apt/lists/* \
-    && rm -rf /usr/share/doc /usr/share/man /usr/share/info \
-    && find / -xdev -xtype l -delete 2>/dev/null || true
+        openssh-server \
+    && rm -rf /var/lib/apt/lists/*
 
 # ── Docker CE (apt repo — only remaining online step) ─────────────────────────
 RUN install -m 0755 -d /etc/apt/keyrings \
@@ -120,8 +121,26 @@ RUN usermod -l laborant -d /home/laborant -m ubuntu \
     && groupmod -n laborant ubuntu \
     && echo 'laborant ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
-# ── remove ALL dangling symlinks (catches doc, apt, anything else) ────────────
-RUN find / -xdev -xtype l -delete 2>/dev/null || true
+# ── sanitize filesystem for iximiuz ext4 bake ────────────────────────────────
+# Ubuntu-specific rules (different from Rocky):
+# 1. Delete sockets/pipes from apt %post scriptlets
+# 2. Break hardlinks under /usr (Ubuntu has ~8, mostly Python pyc)
+# 3. Delete /usr/share/doc entirely — all 74 dangling symlinks live here
+#    (compressed changelog/NEWS files pointing to absent gz targets).
+#    Safe to remove: doc files are never needed at runtime.
+# NOTE: do NOT run 'find / -xdev -xtype l -delete' on Ubuntu — it kills
+#    /sbin/init -> ../lib/systemd/systemd and other valid runtime symlinks.
+RUN find /run /tmp /var/run -maxdepth 5 \( -type s -o -type p \) -delete 2>/dev/null || true \
+    && find /usr -xdev -type f -links +1 2>/dev/null | while IFS= read -r f; do \
+        [ -n "$f" ] && [ -f "$f" ] || continue; \
+        cp -a "$f" /tmp/_hl_break 2>/dev/null && mv -f /tmp/_hl_break "$f" 2>/dev/null || true; \
+       done \
+    && rm -rf /usr/share/doc /usr/share/locale \
+    && rm -f /var/log/README /etc/modules-load.d/modules.conf /etc/vconsole.conf
+
+# ── sshd setup (required by iximiuz platform — bake tool SSHes in to verify liveness) ──
+RUN sed -i 's/^#\?PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config \
+    && sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config
 
 # ── lab files ─────────────────────────────────────────────────────────────────
 RUN mkdir -p /home/laborant/labs /root/.kube
