@@ -160,35 +160,85 @@ Each VM boots its own purpose-built rootfs. The cluster is **not** pre-started �
 
 ## rootfs Build Rules — iximious ext4 Bake Compatibility
 
+> ⚠️ **Status: check-bake.sh passes locally; live playground boot not yet confirmed.**
+> All three images pass the preflight script (0 hardlinks, 0 dangling symlinks, sshd ✓).
+> The RootfsBaked result on the actual iximious platform is still unverified — update this
+> section once a playground boot confirms `RootfsBaked: True` on all 5 VMs.
+
 The iximious platform converts OCI images to raw ext4 rootfs images at playground start time (the `RootfsBaked` condition). This bake step is strict — certain filesystem constructs that are valid in a container image will cause `RootfsBaked: False` and abort the playground.
 
 ### What the bake tool cannot handle
 
 | Filesystem construct | Cause in Rocky Linux images | Fix applied in Dockerfiles |
 |---|---|---|
-| **Dangling symlinks** | RPM `.build-id` symlinks + doc symlinks pointing to stripped files | `find / -xdev -xtype l -delete` |
-| **Unix sockets / pipes / device files** | `gpg-agent` sockets left by RPM `%post` scriptlets during `rke2-selinux` / `container-selinux` install | `find / -xdev \( -type s -o -type p -o -type b -o -type c \) -delete` |
-| **Hardlinks** | Rocky RPM packages (terminfo, zoneinfo, gdb auto-load) create thousands of hardlinks | `find / -xdev -type f -links +1 | while read f; do cp -a "$f" /tmp/_hl && mv /tmp/_hl "$f"; done` |
-| **SELinux xattrs** | `selinux-policy-targeted` + `container-selinux` write xattrs during `%post` | `SELINUX=disabled` in `/etc/selinux/config` (prevents xattrs at runtime; build-time xattrs not written in Docker) |
+| **Dangling symlinks** | RPM `.build-id` symlinks point to absent cross-arch binaries (ppc64le, s390x, aarch64); orphaned `alternatives` entries (`nc-man`, `soelim`) | `find / -xdev -xtype l -delete` — runs **after** hardlink-breaking and **after** sshd setup |
+| **Unix sockets / pipes** | `gpg-agent` sockets left by RPM `%post` scriptlets (`rke2-selinux`, `container-selinux`) in `/run` | `find /run /tmp /var/run -maxdepth 5 \( -type s -o -type p \) -delete` — runs first |
+| **Hardlinks** | Rocky RPMs create hardlinks across terminfo (33), zoneinfo (1105), Python `__pycache__` (1226+), crypto-policies, gcc/gdb share dirs, perl, getconf — **1393+ total** | `find /usr -xdev -type f -links +1` loop with `cp -a + mv` — must scan all of `/usr`, not just known subdirs |
+| **SELinux xattrs** | `selinux-policy-targeted` + `container-selinux` write xattrs during `%post` | `SELINUX=disabled` in `/etc/selinux/config` |
 
 > ⚠️ Ubuntu-based images (vm1 bootstrap) do not have these issues — apt packages do not create hardlinks, sockets, or SELinux xattrs. The Rocky Linux images (vm2–vm5) require the full sanitization step.
 
+### Rocky Linux 9.7 base image trap — `curl-minimal` conflict
+
+`rockylinux:9.7` ships `curl-minimal` pre-installed. It **conflicts** with `curl`. Without `--allowerasing`, any `dnf install` that includes `curl` (directly or as a dep) will **abort the entire transaction silently** — every package in that RUN step, including `openssh-server`, ends up never installed. There is no error about `openssh-server`; the only error mentions `curl-minimal`.
+
+**Fix:** always pass `--allowerasing` on the first `dnf install` in Rocky Dockerfiles:
+
+```dockerfile
+RUN dnf install -y --setopt=install_weak_deps=False --allowerasing \
+        systemd openssh-server curl git tmux ...
+```
+
+This replaces `curl-minimal` with `curl` and allows the full transaction to succeed.
+
 ### Mandatory sanitization RUN step (Rocky images only)
 
-Every Rocky-based Dockerfile must end with this block **after all package installs**:
+Must run **after all package installs and after RKE2 install**, but **before** the sshd setup step. The hardlink-breaker writes to `/tmp/_hl_break` — the socket/pipe deletion runs first to avoid leaving stale socket files from that temp write.
 
 ```dockerfile
 # ── sanitize filesystem for iximiuz ext4 bake ────────────────────────────────
-# Remove anything the bake tool cannot represent in a flat ext4 image:
-#   - dangling symlinks
-#   - hardlinks (Rocky RPMs create thousands via .build-id and terminfo)
-#   - sockets/pipes/devices (gpg-agent sockets left by RPM %post scriptlets)
-RUN find / -xdev -xtype l -delete 2>/dev/null || true \
-    && find / -xdev \( -type s -o -type p -o -type b -o -type c \) -delete 2>/dev/null || true \
-    && find / -xdev -type f -links +1 2>/dev/null | while read f; do \
-        cp -a "$f" /tmp/_hl_break && mv /tmp/_hl_break "$f" || true; \
-       done
+# 1. Delete sockets/pipes left by RPM %post scriptlets.
+# 2. Break ALL hardlinks under /usr — covers terminfo, zoneinfo, Python pyc,
+#    crypto-policies, gcc/gdb share dirs, perl, getconf, and anything else
+#    RPM packages create.  The cp-a+mv pattern is safe: executables in
+#    /usr/bin and /usr/sbin have link-count 1 after RPM install.
+# 3. Delete dangling symlinks — .build-id entries for absent cross-arch
+#    binaries (ppc64le, s390x, aarch64), orphaned alternatives entries, etc.
+RUN find /run /tmp /var/run -maxdepth 5 \( -type s -o -type p \) -delete 2>/dev/null || true \
+    && find /usr -xdev -type f -links +1 2>/dev/null | while IFS= read -r f; do \
+        [ -n "$f" ] && [ -f "$f" ] || continue; \
+        cp -a "$f" /tmp/_hl_break 2>/dev/null && mv -f /tmp/_hl_break "$f" 2>/dev/null || true; \
+       done \
+    && find / -xdev -xtype l -delete 2>/dev/null || true
+
+# ── sshd setup — MUST come AFTER sanitization ────────────────────────────────
+# The bake tool SSHes into the VM after boot to verify liveness.
+# Rocky Linux does not ship sshd by default — openssh-server must be installed
+# (it will be, if --allowerasing is used above) and host keys generated here.
+RUN ssh-keygen -A \
+    && sed -i 's/^#\?PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config \
+    && sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config \
+    && ln -sf /usr/lib/systemd/system/sshd.service \
+        /etc/systemd/system/multi-user.target.wants/sshd.service
 ```
+
+**Why sshd setup must run after sanitization:** the dangling-symlink deletion step
+(`find / -xdev -xtype l -delete`) removes the sshd systemd symlink we just created if it runs
+after sshd setup. The hardlink-breaker is safe before or after — executables are never hardlinked.
+
+### Hardlink scope: must be all of `/usr`, not a list of known dirs
+
+Early attempts scoped the hardlink-breaker to `/usr/share/terminfo /usr/share/zoneinfo /usr/lib/.build-id`. This missed ~1,231 hardlinks:
+
+| Source | Count (approximate) |
+|---|---|
+| `/usr/lib64/python3.9/__pycache__` and subdirs | 1,020 |
+| `/usr/lib/python3.9/` (dnf plugin pyc files) | 206 |
+| `/usr/share/crypto-policies/back-ends/` | ~20 |
+| `/usr/share/gcc-11/`, `/usr/share/gdb/` | ~10 |
+| `/usr/libexec/getconf/`, `/usr/bin/perl` | 5 |
+
+Use `find /usr -xdev -type f -links +1` — this catches everything without risking system directories outside `/usr`.
 
 ### Pre-flight check before every push
 
@@ -203,6 +253,14 @@ cd rootfs && make controlplane worker
 ### Why the bake fails simultaneously on all Rocky VMs
 
 All Rocky VMs fail `RootfsBaked` at the **exact same nanosecond** — this is a deterministic pre-scan rejection at the OCI layer level, not a per-file scan. The bake tool inspects the image before extracting it. Any of the four constructs above triggers immediate rejection of the entire image.
+
+### Current image state (last updated: commit 3c4b89a)
+
+| Image | Size | Hardlinks | Dangling symlinks | sshd | check-bake.sh | Live bake |
+|---|---|---|---|---|---|---|
+| `nkp-bootstrap:latest` | ~1.1 GB | ✓ 0 | ✓ 0 | ✓ | ✅ PASS | ❓ unverified |
+| `nkp-controlplane:latest` | 859 MB | ✓ 0 | ✓ 0 | ✓ | ✅ PASS | ❓ unverified |
+| `nkp-worker:latest` | 802 MB | ✓ 0 | ✓ 0 | ✓ | ✅ PASS | ❓ unverified |
 
 ## Conventions
 
