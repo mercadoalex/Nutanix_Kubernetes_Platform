@@ -11,6 +11,59 @@ You're going to start it and watch a Kubernetes cluster come to life.
 
 ---
 
+## What is rke2-server?
+
+**RKE2** (Rancher Kubernetes Engine 2) is the Kubernetes distribution NKP uses on every node. It replaces kubeadm with a single hardened binary that ships everything pre-bundled.
+
+When you run `systemctl start rke2-server`, one process starts and it launches all of these inside it:
+
+```
+rke2-server
+├── etcd                    — the cluster database (stores all K8s state)
+├── kube-apiserver          — the API you talk to with kubectl
+├── kube-controller-manager — watches objects, drives them toward desired state
+├── kube-scheduler          — decides which node a new pod runs on
+├── kubelet                 — manages the node's own pods
+├── kube-proxy              — handles network rules for Services
+├── containerd              — the container runtime
+└── Cilium                  — CNI (pod networking)
+```
+
+RKE2 has two modes — **server** runs on control plane nodes, **agent** runs on workers:
+
+| Process | Runs on | What it does |
+|---|---|---|
+| `rke2-server` | vm2 (control plane) | Runs etcd + all control plane components + kubelet |
+| `rke2-agent` | vm3–5 (workers) | Runs kubelet + kube-proxy + containerd only — no etcd, no apiserver |
+
+You start `rke2-server` on vm2 first. Once it's up you start `rke2-agent` on vm3–5, pointing them at vm2. That gives you a 1 control plane + 3 worker cluster.
+
+### NKP vs AWS — who owns the control plane?
+
+On AWS EKS the control plane is **managed** — AWS runs etcd and kube-apiserver invisibly on their infrastructure. You never see the control plane nodes, you can't SSH into them.
+
+NKP is the opposite — **you own the control plane VMs**:
+
+```
+AWS EKS                          NKP on AHV
+─────────────────────────────    ──────────────────────────────
+[AWS managed — invisible]        [Your AHV VMs — fully visible]
+  etcd                             VM: nkp-cp-1 (etcd + apiserver)
+  kube-apiserver                   VM: nkp-cp-2 (etcd + apiserver)
+  └─► you pay, can't touch         VM: nkp-cp-3 (etcd + apiserver)
+                                   VIP: 10.x.x.50  ← kube-vip
+
+[Your EC2 nodes]                 [Your AHV VMs]
+  worker-1                         VM: nkp-worker-1
+  worker-2                         VM: nkp-worker-2
+```
+
+This is why `nkp create cluster` needs `--control-plane-replicas 3` and `--control-plane-endpoint-ip` — it's provisioning real VMs with a floating VIP, not delegating to a cloud provider.
+
+In the lab vm2 plays the role of all three control plane VMs. One node is enough to learn on — production NKP uses 3 for HA.
+
+---
+
 ## 1. Configure the RKE2 server
 
 The config file is already in place at `/etc/rancher/rke2/config.yaml`. Review it:
@@ -124,13 +177,14 @@ Press `q` to exit k9s.
 
 ## What just happened
 
-RKE2 started as a single binary that launched:
-1. **etcd** — the cluster database
-2. **kube-apiserver** — the Kubernetes API
-3. **kube-controller-manager** — control loops
-4. **kube-scheduler** — pod placement
-5. **kubelet** — node agent (registering vm2 as a node)
-6. **Cilium** — CNI from the airgap image bundle
+`rke2-server` started as a single binary and launched every control plane component as a static pod. On first start it had to pull its system images (~1 GB) from `registry.rancher.com` — that's the 3–5 minute wait. In production NKP deployments these come from the airgap bundle pre-loaded into the image.
 
-The airgap bundles in `/var/lib/rancher/rke2/agent/images/` meant no internet
-access was needed — all container images were already on disk.
+vm2 is now running:
+1. **etcd** — the cluster database, storing all K8s objects
+2. **kube-apiserver** — the HTTPS API that `kubectl` talks to on port 6443
+3. **kube-controller-manager** — reconciliation loops (Deployments → ReplicaSets → Pods)
+4. **kube-scheduler** — watches for unscheduled pods and assigns them to nodes
+5. **kubelet** — registers vm2 as a node and manages its pods
+6. **Cilium** — pod networking, installed by RKE2 from the `cni: cilium` config
+
+vm3–5 know nothing about this yet. The next lesson adds them as workers.
