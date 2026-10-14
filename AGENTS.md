@@ -34,11 +34,11 @@ NKP runs on top of the Nutanix Cloud Infrastructure (NCI) stack. Use these exact
 
 | Term | Definition | NKP connection |
 |---|---|---|
-| **NCI** (Nutanix Cloud Infrastructure) | The overall platform brand (formerly "Nutanix Platform"). Bundles AHV + AOS + Prism Central. | NKP runs on NCI |
-| **AHV** | KVM-based hypervisor. Hosts all NKP node VMs. | CAPX provisions VMs on AHV via Prism Central API |
-| **AOS** | FreeBSD-based storage OS running inside the CVM (Controller VM) on every node. Provides distributed filesystem, snapshots, replication, dedup, compression. | Nutanix CSI driver + NDK read/write to AOS |
+| **NCI** (Nutanix Cloud Infrastructure) | Nutanix's infrastructure product tier. Contains AOS Storage, AHV Virtualization, Disaster Recovery, Flow, and NC2. Does **not** include Prism Central (that's *Nutanix Central*) or NKP/NDK (separate products). | NKP node VMs run on AHV (NCI); storage from AOS (NCI); managed via Prism Central (Nutanix Central) |
+| **AHV** | KVM-based hypervisor. Part of NCI. Hosts all NKP node VMs. | CAPX provisions VMs on AHV via Prism Central API |
+| **AOS** | FreeBSD-based storage OS running inside the CVM (Controller VM) on every node. Part of NCI. Provides distributed filesystem, snapshots, replication, dedup, compression. | Nutanix CSI driver + NDK read/write to AOS |
 | **CVM** (Controller VM) | The per-node Nutanix storage controller VM. Runs AOS. Never shut down unless Nutanix support instructs. | Transparent to NKP; CSI/NDK talk to AOS via CVM |
-| **Prism Central (PC)** | Multi-cluster management UI and REST API. CAPX/CAREN call `https://<PC_IP>:9440`. | Required for `nkp create cluster --endpoint` |
+| **Prism Central (PC)** | Multi-cluster management UI and REST API. Part of **Nutanix Central** (not NCI). CAPX/CAREN call `https://<PC_IP>:9440`. | Required for `nkp create cluster --endpoint` |
 | **NDK** (Nutanix Data Services for Kubernetes) | Extends AOS enterprise storage features (snapshots, replication, tiering, dedup) to K8s `PersistentVolume` objects via CRDs (`DataServicePolicy`, `ProtectionPolicy`). | Alternative/complement to the CSI driver for stateful workloads |
 | **Nutanix CSI Driver** | Standard K8s CSI driver. Translates `PersistentVolumeClaim` → AOS volume/file share. | Installed as NKP add-on; replaced by Longhorn in lab |
 | **NKP Metal** | Extends NKP to bare-metal nodes (dual-native: VMs + containers). Announced April 2026. | Same nkp CLI + Kommander; bare-metal CAPI provider replaces CAPX |

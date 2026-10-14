@@ -89,10 +89,9 @@ Each layer has a specific job:
 ├─────────────────────────────────────────────────────┤
 │  Rocky Linux 9.7    — CIS-hardened node OS          │
 ├─────────────────────────────────────────────────────┤
-│  Nutanix NCI (NKP runs on NCI)                      │
-│   ├─ AHV        — KVM hypervisor (hosts NKP VMs)    │
-│   ├─ AOS        — storage OS (CVM, NDK, CSI driver) │
-│   └─ Prism Central — infra control plane (CAPX API) │
+│  Nutanix NCI  ── AHV (hypervisor, hosts NKP VMs)   │
+│               ── AOS (storage OS, CVM)              │
+│  Nutanix Central ── Prism Central (CAPX/CAREN API)  │
 └─────────────────────────────────────────────────────┘
 ```
 
@@ -222,7 +221,9 @@ NKP doesn't run in a vacuum — it sits on top of the **Nutanix Cloud Infrastruc
 
 ### NCI — Nutanix Cloud Infrastructure
 
-**NCI** is the overall platform brand (formerly "Nutanix Platform"). It bundles AHV, AOS, and Prism Central into a single integrated stack. When you see "NKP runs on NCI", this is what it means: NKP nodes are AHV VMs, their storage comes from AOS, and CAPX manages them through Prism Central.
+**NCI** is Nutanix's infrastructure product tier. It includes **AOS Storage**, **AHV Virtualization**, Disaster Recovery, Flow (network security), and Cloud Clusters (NC2). It does **not** include Prism Central (that's part of *Nutanix Central*) or NKP/NDK (separate products).
+
+When you see "NKP runs on NCI", it means: NKP node VMs run on **AHV**, their persistent storage comes from **AOS**, and the whole thing is managed through **Prism Central** (which sits in the Nutanix Central tier above NCI).
 
 ### AHV — the hypervisor
 
