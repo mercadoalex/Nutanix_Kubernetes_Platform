@@ -21,11 +21,27 @@ Use these exact terms and definitions consistently across all lesson content.
 
 | Component | Role in NKP |
 |---|---|
-| **Cluster API (CAPI)** | The foundation. Provides automated lifecycle management (create, scale, upgrade, delete) for all clusters via declarative Kubernetes CRDs (`Cluster`, `Machine`, `MachineDeployment`, etc.). |
-| **CAPI Provider: Nutanix** | The AHV-specific CAPI infrastructure provider. Translates `NutanixCluster` / `NutanixMachine` specs into Prism Central API calls to provision real AHV VMs. |
+| **Cluster API (CAPI)** | The foundation. Provider-agnostic framework for declarative cluster lifecycle (`Cluster`, `Machine`, `MachineDeployment`, `RKE2ControlPlane` CRDs). |
+| **CAPX** | *Cluster API Provider for Nutanix* (`cluster-api-provider-nutanix`). AHV-specific CAPI infrastructure provider. Watches `NutanixCluster`/`NutanixMachine` CRDs → calls Prism Central API to provision AHV VMs. Namespace: `capx-system`. |
+| **CAREN** | *Cluster API Runtime Extensions for Nutanix* (`cluster-api-runtime-extensions-nutanix`). Lifecycle hook server. Intercepts `BeforeClusterCreate`, `BeforeClusterUpgrade`, `BeforeClusterDelete` events to validate Nutanix resources and inject CNI/CCM. Namespace: `caren-system`. |
 | **RKE2** | The hardened Kubernetes distribution embedded in every NKP node. Provides the actual `kube-apiserver`, `etcd`, `kubelet`, and containerd runtime. |
 | **Flux CD** | GitOps engine embedded in NKP. Manages add-on lifecycle (Longhorn, Prometheus, Grafana, cert-manager, etc.) via `HelmRelease` and `Kustomization` resources. |
 | **Kommander** | NKP's multi-cluster management layer. Federates policy, RBAC, add-ons, and access control across all Managed and Attached clusters from a single pane. |
+
+### Nutanix infrastructure layer (NCI)
+
+NKP runs on top of the Nutanix Cloud Infrastructure (NCI) stack. Use these exact terms:
+
+| Term | Definition | NKP connection |
+|---|---|---|
+| **NCI** (Nutanix Cloud Infrastructure) | The overall platform brand (formerly "Nutanix Platform"). Bundles AHV + AOS + Prism Central. | NKP runs on NCI |
+| **AHV** | KVM-based hypervisor. Hosts all NKP node VMs. | CAPX provisions VMs on AHV via Prism Central API |
+| **AOS** | FreeBSD-based storage OS running inside the CVM (Controller VM) on every node. Provides distributed filesystem, snapshots, replication, dedup, compression. | Nutanix CSI driver + NDK read/write to AOS |
+| **CVM** (Controller VM) | The per-node Nutanix storage controller VM. Runs AOS. Never shut down unless Nutanix support instructs. | Transparent to NKP; CSI/NDK talk to AOS via CVM |
+| **Prism Central (PC)** | Multi-cluster management UI and REST API. CAPX/CAREN call `https://<PC_IP>:9440`. | Required for `nkp create cluster --endpoint` |
+| **NDK** (Nutanix Data Services for Kubernetes) | Extends AOS enterprise storage features (snapshots, replication, tiering, dedup) to K8s `PersistentVolume` objects via CRDs (`DataServicePolicy`, `ProtectionPolicy`). | Alternative/complement to the CSI driver for stateful workloads |
+| **Nutanix CSI Driver** | Standard K8s CSI driver. Translates `PersistentVolumeClaim` → AOS volume/file share. | Installed as NKP add-on; replaced by Longhorn in lab |
+| **NKP Metal** | Extends NKP to bare-metal nodes (dual-native: VMs + containers). Announced April 2026. | Same nkp CLI + Kommander; bare-metal CAPI provider replaces CAPX |
 
 ### Cluster lifecycle flow
 

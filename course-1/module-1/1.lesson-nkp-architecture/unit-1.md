@@ -89,7 +89,10 @@ Each layer has a specific job:
 ├─────────────────────────────────────────────────────┤
 │  Rocky Linux 9.7    — CIS-hardened node OS          │
 ├─────────────────────────────────────────────────────┤
-│  Nutanix AHV        — hypervisor                    │
+│  Nutanix NCI (NKP runs on NCI)                      │
+│   ├─ AHV        — KVM hypervisor (hosts NKP VMs)    │
+│   ├─ AOS        — storage OS (CVM, NDK, CSI driver) │
+│   └─ Prism Central — infra control plane (CAPX API) │
 └─────────────────────────────────────────────────────┘
 ```
 
@@ -198,6 +201,93 @@ Total time: **45–60 minutes** on a real Nutanix AHV cluster.
 
 ---
 
+## The Nutanix infrastructure layer
+
+NKP doesn't run in a vacuum — it sits on top of the **Nutanix Cloud Infrastructure (NCI)** stack. Understanding this layer is essential because NKP connects to it at multiple points.
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                   Nutanix Cloud Infrastructure (NCI)             │
+│                                                                  │
+│  ┌─────────────┐   ┌──────────────────┐   ┌──────────────────┐  │
+│  │     AHV     │   │      AOS         │   │  Prism Central   │  │
+│  │  KVM-based  │   │  FreeBSD-based   │   │  Multi-cluster   │  │
+│  │ hypervisor  │   │  storage OS CVM  │   │  control plane   │  │
+│  └──────┬──────┘   └───────┬──────────┘   └────────┬─────────┘  │
+│         │                  │                        │            │
+│    NKP VMs run here    CSI driver            CAPX / CAREN API    │
+│                        reads/writes           calls land here    │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+### NCI — Nutanix Cloud Infrastructure
+
+**NCI** is the overall platform brand (formerly "Nutanix Platform"). It bundles AHV, AOS, and Prism Central into a single integrated stack. When you see "NKP runs on NCI", this is what it means: NKP nodes are AHV VMs, their storage comes from AOS, and CAPX manages them through Prism Central.
+
+### AHV — the hypervisor
+
+**AHV** is Nutanix's KVM-based hypervisor. Every NKP node (control plane VM, worker VM) runs as an AHV virtual machine. CAPX provisions these VMs by calling the Prism Central API — the same way you would manually create a VM in the Prism UI, but declaratively driven by Kubernetes CRDs.
+
+NKP Metal (see below) extends this to bare-metal nodes alongside VMs.
+
+### AOS — the storage OS
+
+**AOS** runs inside the **Controller VM (CVM)** — a dedicated VM that runs on every Nutanix node alongside the workload VMs. The CVM is the storage brain: it provides the distributed filesystem (NDFS/DSF), replication, snapshots, compression, deduplication, and tiering for all VMs on that node.
+
+NKP connects to AOS through two paths:
+
+| Path | What it does |
+|---|---|
+| **Nutanix CSI Driver** | Kubernetes storage driver. Translates `PersistentVolumeClaim` objects into AOS volumes and file shares. Installed as an NKP add-on. |
+| **NDK (Nutanix Data Services for Kubernetes)** | Extends AOS data services — snapshots, replication, compression, dedup, tiering — directly to Kubernetes `PersistentVolume` objects. Gives Kubernetes workloads access to enterprise storage features without leaving the Kubernetes API. |
+
+> In the lab we use **Longhorn** as the storage add-on because it runs entirely inside Kubernetes without needing AOS. In a real Nutanix cluster you would use the Nutanix CSI driver + NDK instead.
+
+### Prism Central — the control plane NKP talks to
+
+**Prism Central (PC)** is Nutanix's multi-cluster management UI and API server. It federates multiple Nutanix clusters under one pane and exposes a REST API for automation.
+
+CAPX and CAREN both call the Prism Central API:
+
+- **CAPX** calls PC to create/delete/resize VMs when reconciling `NutanixMachine` objects
+- **CAREN** calls PC to validate that OS images and storage containers exist before allowing cluster operations to proceed
+
+This is why `nkp create cluster` requires `--endpoint https://<PC_IP>:9440` — that address is the Prism Central API endpoint.
+
+### NDK — Nutanix Data Services for Kubernetes
+
+**NDK** is a more recent layer that sits between AOS and Kubernetes. Where the CSI driver gives you basic PV provisioning, NDK gives Kubernetes workloads access to the full AOS feature set:
+
+- **Application-consistent snapshots** of PVs
+- **Cross-cluster replication** of PVs (for DR)
+- **Storage efficiency** — compression, dedup, tiering — applied per-PV
+- **Volume groups** — attach a single AOS volume group to multiple pods
+
+NDK is configured via its own CRDs (`DataServicePolicy`, `ProtectionPolicy`, etc.) and is particularly relevant for stateful workloads like databases running on NKP.
+
+### NKP Metal — bare-metal Kubernetes (new, April 2026)
+
+**NKP Metal** extends NKP beyond AHV VMs to **bare-metal nodes**. It introduces a dual-native architecture where VMs and containers are equally first-class:
+
+- Bare-metal nodes join NKP clusters alongside AHV VM nodes
+- Targets AI/ML workloads, edge deployments, and performance-sensitive applications where VM overhead matters
+- Uses the same `nkp` CLI and Kommander management plane as the AHV-based deployment
+
+> NKP Metal was announced in April 2026. This course covers the AHV VM path. The bare-metal path uses the same CAPI/Flux/Kommander concepts — the difference is in the infrastructure provider (a bare-metal CAPI provider replaces CAPX).
+
+### How NKP connects to NCI — summary
+
+| NKP component | Nutanix layer it talks to | What it does |
+|---|---|---|
+| CAPX | Prism Central API | Creates/deletes NKP node VMs |
+| CAREN | Prism Central API | Validates OS images, storage containers |
+| Nutanix CSI driver | AOS (via CVM) | Provisions PersistentVolumes |
+| NDK | AOS (via CVM) | Snapshots, replication, storage policies on PVs |
+| Nutanix CCM | Prism Central API | Provisions L4 load balancer VIPs (replaced by MetalLB in lab) |
+| NKP node VMs | AHV | Run as AHV VMs on the hypervisor |
+
+---
+
 ## In the lab
 
 In this course's iximious Flexbox lab, we simulate steps 3–8 manually:
@@ -233,5 +323,9 @@ Before moving on, you should be able to answer:
 2. What does CAPI actually store — code or data?
 3. Which component deploys Cilium — RKE2, CAPI, or Flux?
 4. What is the difference between a Managed cluster and an Attached cluster?
+5. What is the difference between CAPX and CAREN?
+6. Which Nutanix component does CAPX call when it needs to create a VM?
+7. What does NDK add on top of the basic Nutanix CSI driver?
+8. Why does the lab use Longhorn instead of the Nutanix CSI driver?
 
 Answers are in the lesson above — re-read the relevant section before moving on.
