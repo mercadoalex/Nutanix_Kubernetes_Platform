@@ -100,10 +100,11 @@ A single `kind` node. This is not a real cluster — it is scaffolding.
 
 ```bash
 kubectl get pods -n capi-system
-kubectl get pods -n capc-system   # Nutanix (CAPC) provider
+kubectl get pods -n capx-system    # Nutanix provider (CAPX)
+kubectl get pods -n caren-system   # Runtime extensions (CAREN)
 ```
 
-You should see the CAPI core controllers and the Cluster API Provider for Nutanix (CAPC) running.
+You should see the CAPI core controllers, CAPX (Cluster API Provider for Nutanix), and CAREN (Cluster API Runtime Extensions for Nutanix) running.
 
 ---
 

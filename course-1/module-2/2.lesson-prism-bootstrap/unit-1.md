@@ -161,7 +161,8 @@ nkp create bootstrap
 
 `nkp` uses `kind` to create a single-node Kubernetes cluster on the jump host, then deploys:
 - **Cluster API (CAPI)** core controllers
-- **CAPI Provider for Nutanix (CAPC)** — translates `NutanixCluster` CRDs → Prism Central API calls
+- **CAPX** (Cluster API Provider for Nutanix) — translates `NutanixCluster` / `NutanixMachine` CRDs → Prism Central API calls
+- **CAREN** (Cluster API Runtime Extensions for Nutanix) — pre-flight hooks that validate the OS image and storage container exist before provisioning begins
 
 Expected output:
 

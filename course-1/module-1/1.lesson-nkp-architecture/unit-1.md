@@ -82,7 +82,8 @@ Each layer has a specific job:
 │  Flux CD            — GitOps, add-on reconciliation │
 ├─────────────────────────────────────────────────────┤
 │  Cluster API (CAPI) — declarative cluster lifecycle │
-│  + Nutanix provider — provisions VMs on AHV         │
+│  CAPX               — CAPI provider for Nutanix AHV │
+│  CAREN              — runtime extensions (policies) │
 ├─────────────────────────────────────────────────────┤
 │  RKE2               — Kubernetes distribution       │
 ├─────────────────────────────────────────────────────┤
@@ -95,9 +96,80 @@ Each layer has a specific job:
 | Component | What it does |
 |---|---|
 | **RKE2** | CNCF-conformant Kubernetes distribution from Rancher. Replaces kubeadm. CIS-hardened by default. |
-| **Cluster API (CAPI)** | Kubernetes extension that models clusters as CRDs. `NutanixCluster`, `NutanixMachine` objects describe your infrastructure. |
+| **Cluster API (CAPI)** | Kubernetes extension that models clusters as CRDs. Defines *what* a cluster should look like — number of control plane nodes, worker count, Kubernetes version. Provider-agnostic. |
+| **CAPX** | *Cluster API Provider for Nutanix* (also `cluster-api-provider-nutanix`). The AHV-specific CAPI infrastructure provider. Watches `NutanixCluster` and `NutanixMachine` CRDs and translates them into Prism Central API calls that provision real AHV VMs. Ships inside the `nkp create bootstrap` cluster. |
+| **CAREN** | *Cluster API Runtime Extensions for Nutanix*. A Nutanix-specific CAPI runtime extension server that intercepts cluster lifecycle hooks (BeforeClusterCreate, BeforeClusterUpgrade, etc.) to enforce Nutanix-specific policies — for example validating that the requested OS image exists in Prism Central before allowing cluster creation to proceed. |
 | **Flux CD** | GitOps operator. Reads HelmRelease objects and ensures add-ons are installed and up to date. |
 | **Kommander** | NKP's management UI. Workspaces, projects, centralized RBAC, add-on catalog. |
+
+---
+
+## CAPI, CAPX, and CAREN — how they divide the work
+
+These three components are often confused because they all live inside the same cluster and cooperate tightly. Here is how to tell them apart:
+
+### Cluster API (CAPI) — the framework
+
+CAPI is a **generic Kubernetes extension** from the Kubernetes SIG-cluster-lifecycle project. It defines the *shape* of a cluster as CRDs:
+
+- `Cluster` — the top-level cluster object
+- `MachineDeployment` / `MachineSet` / `Machine` — declarative node pool management
+- `KubeadmControlPlane` / `RKE2ControlPlane` — control plane bootstrap spec
+
+CAPI itself is **infrastructure-agnostic** — it has no idea what AHV, AWS, or vSphere even is. It delegates actual VM creation to a *provider*.
+
+### CAPX — the Nutanix provider
+
+**CAPX** (*Cluster API Provider for Nutanix*, GitHub: `nutanix-cloud-native/cluster-api-provider-nutanix`) is the AHV-specific infrastructure provider. It adds two CRDs:
+
+- `NutanixCluster` — describes AHV-specific cluster settings (Prism Central endpoint, subnet, storage container)
+- `NutanixMachine` / `NutanixMachineTemplate` — describes each node VM (image, vCPU, RAM, category tags)
+
+When CAPI creates a `Machine`, CAPX's controller takes over and:
+1. Calls the Prism Central API to create a VM
+2. Injects the RKE2 bootstrap script via cloud-init
+3. Watches the VM until it joins the cluster
+4. Updates the `Machine` object's status
+
+CAPX is installed automatically by `nkp create bootstrap` and lives in the `capx-system` namespace.
+
+### CAREN — the lifecycle guard
+
+**CAREN** (*Cluster API Runtime Extensions for Nutanix*, GitHub: `nutanix-cloud-native/cluster-api-runtime-extensions-nutanix`) is a **CAPI Runtime Extension server** — a webhook-like component that intercepts cluster lifecycle events *before* CAPX acts on them.
+
+CAREN handles:
+
+| Hook | What CAREN does |
+|---|---|
+| `BeforeClusterCreate` | Validates OS image exists in Prism Central; validates storage container is accessible |
+| `BeforeClusterUpgrade` | Verifies the target OS image for the new version is uploaded before allowing the upgrade to start |
+| `BeforeClusterDelete` | Runs pre-delete cleanup (CSI volume detach, node drain ordering) |
+| CNI / CCM injection | Installs Cilium and the Nutanix CCM into new clusters via `ClusterResourceSet` |
+
+Think of CAREN as the **policy and pre-flight layer** that sits between your `nkp` command and CAPX actually calling Prism Central.
+
+### How they fit together at cluster create time
+
+```
+nkp create cluster
+      │
+      ▼
+ NutanixCluster + Cluster objects created in Bootstrap cluster
+      │
+      ▼
+ CAREN BeforeClusterCreate hook fires
+      │  ✓ OS image found in Prism Central
+      │  ✓ Storage container reachable
+      ▼
+ CAPI core controller starts reconciling Machine objects
+      │
+      ▼
+ CAPX NutanixMachine controller calls Prism Central API
+      │  → AHV VM created
+      │  → RKE2 bootstrap script injected via cloud-init
+      ▼
+ RKE2 starts on new VM → node joins cluster
+```
 
 ---
 
