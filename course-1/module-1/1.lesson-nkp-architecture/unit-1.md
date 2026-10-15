@@ -84,10 +84,9 @@ NKP defines four distinct roles for clusters. Each has a single job.
 
 ::image-box
 ---
-:src: __static__/placeholder-four-cluster-roles-overview.png
-:alt: 'NKP four cluster roles diagram showing Bootstrap, Management, Workload, and Attached clusters with directional arrows between them'
+:src: __static__/four-cluster-roles-overview.png
+:alt: 'NKP four cluster roles — Bootstrap, Management, Workload, and Attached clusters'
 ---
-_TODO: Replace with actual screenshot — diagram showing Bootstrap→Management→Workload→Attached with labeled arrows indicating the lifecycle relationships (Bootstrap creates Management, Management creates Workload, Management federates Attached)_
 ::
 
 ### 1. Bootstrap Cluster — *Clúster de arranque*
