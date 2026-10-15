@@ -1,0 +1,450 @@
+---
+kind: unit
+title: "GPU Support on NKP — Part 2: GPU Operator, Time-Slicing, MIG, and Lab"
+name: 1-lesson-gpu-unit-2
+---
+
+# GPU Support on NKP — Part 2: GPU Operator, Time-Slicing, MIG, and Lab
+
+> **Tier:** Mixed  
+> **Interactive** 💻 — run from vm1 (bootstrap) against the cluster on vm2–vm5.  
+> **Playground:** `nkp-flexbox` (vm1 = bootstrap, vm2–vm5 = cluster)
+
+> 📖 **Prerequisites:** Complete [Part 1 — AHV GPU Hardware](unit-1.md) first. This unit assumes GPUs are already assigned to your worker VMs in Prism Central (or you are using the lab simulation path in Part G).
+
+> ⚠️ **Air-gap note:** The GPU Operator pulls images from **`nvcr.io`** (NVIDIA Container Registry). In an air-gapped environment, you must pre-pull these images and push them to Harbor before installing. The NVCR pre-pull procedure is covered in [Lesson 1c — What is Air-Gapped?](../../module-1/1c.lesson-air-gap/unit-1.md). In this course, the required images are pre-loaded in Harbor on vm1.
+
+---
+
+## What you will learn
+
+- How the NVIDIA GPU Operator manages the entire GPU software stack as DaemonSets
+- How to enable the GPU Operator via the NKP catalog (`nkp` CLI and Kommander UI)
+- How to verify GPU availability in a running cluster
+- How to schedule GPU workloads with `nvidia.com/gpu` resource requests
+- How to share one GPU across multiple pods using **time-slicing**
+- How to partition an A100/H100 with **MIG** for hard memory isolation
+- How to test GPU scheduling in the lab **without physical hardware**
+
+---
+
+## Part B — Enabling the GPU Operator on NKP
+
+::image-box
+---
+:src: __static__/placeholder-nvidia-smi-gpu-node-output.png
+:alt: 'nvidia-smi output inside a CUDA container showing GPU name, driver version, and CUDA version'
+---
+_TODO: Replace with actual screenshot — terminal showing `kubectl logs cuda-vector-add` output from the nvidia-smi command: GPU model (e.g. NVIDIA A100), driver version, CUDA version, memory total/used, and running processes table_
+::
+
+### How the GPU Operator works
+
+The NVIDIA GPU Operator is a Kubernetes Operator that manages the **entire GPU software stack** as DaemonSets — you never need to bake GPU drivers into the node OS image.
+
+```
+ClusterPolicy (CRD)
+    │
+    ▼
+GPU Operator controller
+    ├── Driver DaemonSet         → compiles + loads NVIDIA kernel module
+    ├── Container Toolkit DS     → injects nvidia-container-runtime into containerd
+    ├── Device Plugin DS         → registers nvidia.com/gpu as K8s Extended Resource
+    ├── GFD (Feature Discovery)  → labels nodes: nvidia.com/gpu.product, .memory, etc.
+    ├── DCGM Exporter DS         → Prometheus metrics (utilization, temp, ECC errors)
+    └── MIG Manager DS           → manages MIG partitioning on A100/H100
+```
+
+Students interact with a single `ClusterPolicy` object — the Operator reconciles all the moving parts.
+
+### Option 1 — Enable via `nkp` CLI (recommended for NKP)
+
+```bash
+# On vm1, with KUBECONFIG pointing at the management cluster
+export KUBECONFIG=/home/laborant/labs/mgmt.kubeconfig
+
+# List available catalog applications
+nkp get applications
+
+# Enable the GPU Operator add-on on a workload cluster
+nkp enable application nvidia-gpu-operator \
+  --cluster-name=workload-01
+
+# With custom values (e.g. disable driver if pre-installed in node image)
+nkp enable application nvidia-gpu-operator \
+  --cluster-name=workload-01 \
+  --values=/home/laborant/labs/13-gpu/gpu-operator-values.yaml
+```
+
+### Option 2 — Enable via Kommander UI
+
+1. Kommander Dashboard → **Clusters** → select the target cluster
+2. → **Add-ons** → find **"GPU Operator"** in the catalog
+3. Click **Enable** / **Deploy**
+4. Expand **Configuration** to override values before deploying
+
+### Option 3 — Direct Helm install (for non-Kommander clusters)
+
+```bash
+helm repo add nvidia https://helm.ngc.nvidia.com/nvidia
+helm repo update
+
+helm install gpu-operator nvidia/gpu-operator \
+  --namespace gpu-operator \
+  --create-namespace \
+  --version v24.9.1 \
+  --set driver.enabled=true \
+  --set toolkit.enabled=true \
+  --set devicePlugin.enabled=true \
+  --set dcgmExporter.enabled=true \
+  --set gfd.enabled=true \
+  --wait
+```
+
+### RKE2-specific values override
+
+NKP nodes run RKE2, which uses a **non-standard containerd socket path**. Recent GPU Operator versions (v23.9+) auto-detect this, but if you are pinning an older version:
+
+```yaml
+# gpu-operator-values.yaml
+toolkit:
+  env:
+  - name: CONTAINERD_SOCKET
+    value: /run/k3s/containerd/containerd.sock
+  - name: CONTAINERD_CONFIG
+    value: /var/lib/rancher/rke2/agent/etc/containerd/config.toml
+```
+
+---
+
+## Part C — Verifying GPU availability
+
+::image-box
+---
+:src: __static__/placeholder-kubectl-describe-node-gpu-capacity.png
+:alt: 'kubectl describe node output showing nvidia.com/gpu in Capacity and Allocatable sections'
+---
+_TODO: Replace with actual screenshot — terminal showing `kubectl describe node <gpu-node>` scrolled to the Capacity/Allocatable section with `nvidia.com/gpu: 1` (or more) visible, plus the nvidia.com/gpu.product and nvidia.com/gpu.memory node labels from GPU Feature Discovery_
+::
+
+```bash
+# 1. Check GPU Operator pods are all Running
+kubectl get pods -n gpu-operator
+
+# Expected: all pods Running or Completed
+# NAME                                                        READY   STATUS
+# gpu-operator-xxxxx                                          1/1     Running
+# nvidia-container-toolkit-daemonset-xxxxx                    1/1     Running
+# nvidia-dcgm-exporter-xxxxx                                  1/1     Running
+# nvidia-device-plugin-daemonset-xxxxx                        1/1     Running
+# nvidia-driver-daemonset-xxxxx                               1/1     Running
+# nvidia-gpu-feature-discovery-xxxxx                          1/1     Running
+
+# 2. Check node labels applied by GPU Feature Discovery
+kubectl get nodes --show-labels | tr ',' '\n' | grep nvidia
+
+# 3. Check GPU capacity registered on the node
+kubectl describe node <gpu-node> | grep -A10 "Capacity:"
+# nvidia.com/gpu: 1
+
+# 4. Run nvidia-smi in a CUDA container
+kubectl run -it --rm gpu-test \
+  --image=nvcr.io/nvidia/cuda:12.4.0-base-ubuntu22.04 \
+  --restart=Never \
+  --limits='nvidia.com/gpu=1' \
+  -- nvidia-smi
+```
+
+---
+
+## Part D — Scheduling a GPU workload
+
+### Basic GPU pod
+
+```yaml
+# gpu-pod.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: cuda-vector-add
+spec:
+  restartPolicy: OnFailure
+  containers:
+  - name: cuda-vector-add
+    image: nvcr.io/nvidia/cuda:12.4.0-base-ubuntu22.04
+    command: ["nvidia-smi"]
+    resources:
+      limits:
+        nvidia.com/gpu: "1"    # request 1 GPU — whole-GPU allocation
+      requests:
+        nvidia.com/gpu: "1"
+```
+
+```bash
+kubectl apply -f gpu-pod.yaml
+kubectl logs cuda-vector-add
+# Should print nvidia-smi output with GPU name, driver version, CUDA version
+```
+
+> **Important:** GPU resources cannot be fractional (`0.5` is not valid). For sub-GPU sharing, use time-slicing (§E) or MIG (§F).
+
+### Targeting a specific GPU type with node selectors
+
+GPU Feature Discovery labels nodes with GPU properties. Use these for precise placement:
+
+```yaml
+spec:
+  nodeSelector:
+    nvidia.com/gpu.product: "NVIDIA-A100-SXM4-80GB"
+    # or:
+    nvidia.com/gpu.memory: "81920"   # MB
+```
+
+---
+
+## Part E — GPU Time-Slicing (sharing one GPU across pods)
+
+Time-slicing oversubscribes a single GPU by advertising multiple logical units. There is **no memory isolation** between slices — use MIG for that.
+
+### Step 1 — Create the time-slicing ConfigMap
+
+```yaml
+# time-slicing-config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: time-slicing-config
+  namespace: gpu-operator
+data:
+  any: |-
+    version: v1
+    flags:
+      migStrategy: none
+    sharing:
+      timeSlicing:
+        renameByDefault: false
+        failRequestsGreaterThanOne: false
+        resources:
+        - name: nvidia.com/gpu
+          replicas: 4    # 1 physical GPU → advertised as 4
+```
+
+```bash
+kubectl apply -f time-slicing-config.yaml
+```
+
+### Step 2 — Reference it from ClusterPolicy
+
+```bash
+kubectl patch clusterpolicy gpu-cluster-policy \
+  --type=merge \
+  -p '{"spec":{"devicePlugin":{"config":{"name":"time-slicing-config","default":"any"}}}}'
+```
+
+### Step 3 — Verify
+
+```bash
+kubectl describe node <gpu-node> | grep "nvidia.com/gpu"
+# Capacity:    nvidia.com/gpu: 4
+# Allocatable: nvidia.com/gpu: 4
+```
+
+Four pods can now each request `nvidia.com/gpu: 1` and all land on the same physical GPU.
+
+---
+
+## Part F — MIG (Multi-Instance GPU) for hard isolation
+
+MIG is only available on **NVIDIA A100, A30, H100, H200**. It partitions the GPU in hardware — each instance gets dedicated SM clusters, L2 cache, and HBM2 bandwidth. No interference between instances.
+
+### A100 80 GB MIG profile options
+
+| Profile | Instances per GPU | Memory | Use case |
+|---|---|---|---|
+| `1g.10gb` | 7 | 10 GB each | Many small inference workloads |
+| `2g.20gb` | 3 | 20 GB each | Medium models |
+| `3g.40gb` | 2 | 40 GB each | Large models |
+| `7g.80gb` | 1 | 80 GB (full) | Single large training job |
+
+### Enable MIG in ClusterPolicy
+
+```yaml
+# mig-parted-config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mig-parted-config
+  namespace: gpu-operator
+data:
+  config.yaml: |
+    version: v1
+    mig-configs:
+      all-1g.10gb:
+        - devices: all
+          mig-enabled: true
+          mig-devices:
+            "1g.10gb": 7
+      all-3g.40gb:
+        - devices: all
+          mig-enabled: true
+          mig-devices:
+            "3g.40gb": 2
+      all-disabled:
+        - devices: all
+          mig-enabled: false
+```
+
+```bash
+kubectl apply -f mig-parted-config.yaml
+
+kubectl patch clusterpolicy gpu-cluster-policy \
+  --type=merge \
+  -p '{
+    "spec": {
+      "mig": {"strategy": "single"},
+      "migManager": {
+        "enabled": true,
+        "config": {"name": "mig-parted-config", "default": "all-1g.10gb"}
+      }
+    }
+  }'
+```
+
+### Request a MIG slice in a pod
+
+```yaml
+resources:
+  limits:
+    nvidia.com/mig-1g.10gb: "1"    # one isolated MIG instance
+```
+
+### Time-slicing vs. MIG at a glance
+
+| | Time-Slicing | MIG |
+|---|---|---|
+| GPU models | All NVIDIA | A100, A30, H100, H200 only |
+| Memory isolation | ❌ Shared | ✅ Hardware partitioned |
+| Fault isolation | ❌ | ✅ |
+| Profile flexibility | Any replica count | Fixed profiles per model |
+| Best for | Dev/test, small models | Production multi-tenant inference |
+
+---
+
+## Part G — Lab simulation (no physical GPU)
+
+In the Flexbox playground there is no physical GPU. Use this technique to practice GPU-aware scheduling, node selectors, and resource requests without hardware.
+
+### Advertise fake GPU capacity on a node
+
+```bash
+# On vm1 — patch a worker node to advertise 2 fake GPUs
+kubectl proxy &
+sleep 1
+
+NODE=worker-01   # or worker-02, worker-03
+
+curl -s -k -X PATCH \
+  -H "Content-Type: application/json-patch+json" \
+  "http://localhost:8001/api/v1/nodes/${NODE}/status" \
+  -d '[{"op":"add","path":"/status/capacity/nvidia.com~1gpu","value":"2"}]'
+
+# Verify
+kubectl get nodes -o custom-columns=\
+'NAME:.metadata.name,GPU:.status.capacity.nvidia\.com/gpu'
+```
+
+### Deploy a fake GPU device plugin
+
+For persistent fake GPU registration (survives kubelet restarts):
+
+```yaml
+# fake-gpu-plugin.yaml
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: fake-gpu-device-plugin
+  namespace: kube-system
+spec:
+  selector:
+    matchLabels:
+      app: fake-gpu-device-plugin
+  template:
+    metadata:
+      labels:
+        app: fake-gpu-device-plugin
+    spec:
+      tolerations:
+      - key: CriticalAddonsOnly
+        operator: Exists
+      containers:
+      - name: fake-plugin
+        image: divineops/fake-gpu-device-plugin:latest
+        env:
+        - name: NUM_GPUS
+          value: "2"
+        volumeMounts:
+        - name: device-plugin
+          mountPath: /var/lib/kubelet/device-plugins
+      volumes:
+      - name: device-plugin
+        hostPath:
+          path: /var/lib/kubelet/device-plugins
+```
+
+```bash
+kubectl apply -f fake-gpu-plugin.yaml
+kubectl get nodes -o custom-columns='NAME:.metadata.name,GPU:.status.capacity.nvidia\.com/gpu'
+```
+
+### Test GPU-aware scheduling
+
+::image-box
+---
+:src: __static__/placeholder-gpu-workload-pod-logs.png
+:alt: 'kubectl logs output from a GPU workload pod showing CUDA or nvidia-smi results'
+---
+_TODO: Replace with actual screenshot — terminal showing `kubectl logs cuda-vector-add` (or the fake-GPU scheduled pod) with the pod status Running on the correct node visible in `kubectl get pod -o wide`, and the GPU resource consumption shown in `kubectl describe node` Allocated resources section_
+::
+
+```bash
+# Schedule a pod that requests 1 GPU — it will land on a fake-GPU node
+kubectl run gpu-scheduled-test \
+  --image=busybox \
+  --restart=Never \
+  --limits='nvidia.com/gpu=1' \
+  -- sleep 60
+
+# Confirm it scheduled (it won't have a real GPU device, but scheduling logic works)
+kubectl get pod gpu-scheduled-test -o wide
+
+# Confirm the node's GPU capacity was consumed
+kubectl describe node worker-01 | grep -A5 "Allocated resources"
+```
+
+> ⚠️ `nvidia-smi` will fail inside the pod — there is no real device. This simulation exercises **scheduling**, **resource accounting**, and **node selector** logic only.
+
+---
+
+## What works in the lab vs. what requires real hardware
+
+| Exercise | Lab (fake GPU) | Real hardware needed |
+|---|---|---|
+| Deploy GPU Operator CRDs and controller | ✅ | |
+| Author `ClusterPolicy` YAML | ✅ | |
+| Author time-slicing ConfigMap | ✅ | |
+| Author MIG ConfigMap | ✅ | |
+| `nvidia.com/gpu` pod scheduling | ✅ (with fake plugin) | |
+| Node selector by `nvidia.com/gpu.product` | ✅ (with manual label) | |
+| `nvidia-smi` inside a container | | ✅ |
+| DCGM Prometheus metrics | | ✅ |
+| Actual CUDA workload | | ✅ |
+| AHV GPU passthrough assignment | | ✅ (Prism Central) |
+| vGPU profile selection | | ✅ (Prism Central + NVIDIA license) |
+
+---
+
+## Next steps
+
+➡️ [Lesson 7-3 — Sizing NKP for AI/ML Workloads](../3.lesson-ai-sizing/unit-1.md)  
+➡️ [Lesson 7-4 — What is QLoRA?](../4.lesson-qlora/unit-1.md)  
+➡️ [Module 7, Lesson 2 — Ansible Automation](../2.lesson-ansible/unit-1.md)

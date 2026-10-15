@@ -50,19 +50,20 @@ kubectl apply -f security-policy.yaml  # hub / Management Cluster
 :summary: "NKP's fleet management comes from D2iQ — here's why that matters"
 ---
 
-::image-box
----
-:src: __static__/d21q.png
-:alt: 'D2iQ — the Kubernetes company Nutanix acquired in 2023, creators of Kommander and Konvoy'
----
-::
-
 NKP's fleet management layer didn't start at Nutanix. It comes from **D2iQ** — a Kubernetes company Nutanix acquired in 2023. D2iQ was the original developer of two open-source projects that now form the core of NKP:
 
 - **Kommander** — the fleet management layer: centralized UI, GitOps, multi-tenancy, policy, observability across all clusters
 - **Konvoy** — the cluster lifecycle manager built on Cluster API (CAPI)
 
 Nutanix wrapped these into **NKP (Nutanix Kubernetes Platform)**, announced at .NEXT in May 2024. The fleet management features (Kommander multi-cluster, Attached Clusters) are available in the **NKP Ultimate** tier.
+
+::image-box
+---
+:src: __static__/d21q.png
+:alt: 'D2iQ — the Kubernetes company Nutanix acquired in 2023, creators of Kommander and Konvoy'
+:centered: true
+---
+::
 ::
 
 ## You're about to create a Kubernetes cluster. Where does that request go?
@@ -82,6 +83,28 @@ This is the core insight. Once it clicks, everything else in NKP makes sense.
 
 NKP defines four distinct roles for clusters. Each has a single job.
 
+::details-box
+---
+:summary: "Are these roles mandatory? Can I combine them?"
+---
+
+The four roles are **relationship labels**, not a rigid topology you must follow. NKP's tooling and documentation is built around them, but the underlying technology doesn't prevent other arrangements:
+
+| Role | Mandatory? | Reality |
+|---|---|---|
+| **Bootstrap** | Only during initial install — deleted right after `nkp move` | You could use any existing K8s cluster as a temporary CAPI host; `nkp create bootstrap` just automates this |
+| **Management** | Yes, if you want NKP fleet management | Without it you have no Kommander, no centralized add-on lifecycle, no fleet RBAC — you'd just be running standalone RKE2 |
+| **Managed / Workload** | No — the Management Cluster *can* host workloads | Nutanix strongly discourages it in production; it blurs the control plane / data plane boundary |
+| **Attached** | No — NKP Ultimate only, fully optional | You can manage external clusters independently and never attach them |
+
+**How the topology scales in practice:**
+- A home lab might run Management + Workload on the same cluster
+- A large enterprise might have one Management Cluster per region with dozens of Managed Clusters under each
+- A hybrid org might attach EKS/GKE clusters alongside AHV-native Managed Clusters
+
+The "four roles" model is the **canonical NKP path** — not a technical wall.
+::
+
 ::image-box
 ---
 :src: __static__/four-cluster-roles-overview.png
@@ -89,7 +112,7 @@ NKP defines four distinct roles for clusters. Each has a single job.
 ---
 ::
 
-### 1. Bootstrap Cluster — *Clúster de arranque*
+### 1. Bootstrap Cluster 
 
 A **temporary** cluster that exists only during initial installation.
 
@@ -110,7 +133,7 @@ nkp create bootstrap
 Think of it as scaffolding: you need it to build the building, but once the building
 stands on its own, the scaffolding comes down.
 
-### 2. Management Cluster — *Clúster de gestión*
+### 2. Management Cluster 
 
 The **permanent brain** of your NKP environment.
 
@@ -120,7 +143,7 @@ The **permanent brain** of your NKP environment.
 - Creates and manages all other clusters via Cluster API
 - One Management Cluster per NKP environment
 
-### 3. Managed / Workload Cluster — *Clúster de trabajo*
+### 3. Managed / Workload Cluster 
 
 Where your applications run.
 
@@ -129,7 +152,7 @@ Where your applications run.
 - Add-ons deployed via Flux CD from the Management Cluster
 - Can be upgraded, scaled, or deleted without touching the Management Cluster
 
-### 4. Attached Cluster — *Clúster adjunto* (Ultimate only)
+### 4. Attached Cluster (Ultimate only)
 
 An **existing** cluster (EKS, GKE, on-prem RKE2) brought under NKP management.
 
@@ -145,10 +168,9 @@ Each layer has a specific job:
 
 ::image-box
 ---
-:src: __static__/placeholder-nkp-full-stack-diagram.png
+:src: __static__/nkp-full-stack-diagram.png
 :alt: 'NKP full technology stack diagram with layers from Nutanix AHV at the bottom up through AOS, Prism Central, Rocky Linux, RKE2, CAPI/CAPX/CAREN, Flux CD, and Kommander at the top'
 ---
-_TODO: Replace with actual screenshot — layered stack diagram with all components from AHV/AOS/Prism Central at the bottom up to Kommander at the top, with brief role labels for each layer_
 ::
 
 ```
@@ -188,10 +210,9 @@ These three components are often confused because they all live inside the same 
 
 ::image-box
 ---
-:src: __static__/placeholder-capi-capx-caren-relationship.png
+:src: __static__/capi-capx-caren-relationship.png
 :alt: 'Relationship diagram showing CAPI as the central framework with CAPX as the Nutanix infrastructure provider below it and CAREN as the lifecycle policy layer intercepting requests between the CLI and CAPX'
 ---
-_TODO: Replace with actual screenshot — component relationship diagram: nkp CLI → CAREN (hooks) → CAPI (core controller) → CAPX (Nutanix provider) → Prism Central, with each component's role annotated_
 ::
 
 ### Cluster API (CAPI) — the framework
@@ -236,26 +257,12 @@ Think of CAREN as the **policy and pre-flight layer** that sits between your `nk
 
 ### How they fit together at cluster create time
 
-```
-nkp create cluster
-      │
-      ▼
- NutanixCluster + Cluster objects created in Bootstrap cluster
-      │
-      ▼
- CAREN BeforeClusterCreate hook fires
-      │  ✓ OS image found in Prism Central
-      │  ✓ Storage container reachable
-      ▼
- CAPI core controller starts reconciling Machine objects
-      │
-      ▼
- CAPX NutanixMachine controller calls Prism Central API
-      │  → AHV VM created
-      │  → RKE2 bootstrap script injected via cloud-init
-      ▼
- RKE2 starts on new VM → node joins cluster
-```
+::image-box
+---
+:src: __static__/fit-together-cluster-create-time -v1.png
+:alt: 'Cluster create time flow: nkp create cluster → NutanixCluster + Cluster objects in Bootstrap cluster → CAREN BeforeClusterCreate hook validates OS image and storage container → CAPI reconciles Machine objects → CAPX calls Prism Central API creating AHV VM and injecting RKE2 bootstrap via cloud-init → RKE2 starts, node joins cluster'
+---
+::
 
 ---
 
@@ -273,10 +280,9 @@ Here is what happens, step by step:
 
 ::image-box
 ---
-:src: __static__/placeholder-cluster-creation-request-flow.png
+:src: __static__/fit-together-cluster-create-time -v1.png
 :alt: 'End-to-end cluster creation request flow diagram from nkp CLI through CAREN, CAPI, CAPX, Prism Central, AHV VM boot, RKE2 startup, Flux CD add-on deployment, and Kommander registration'
 ---
-_TODO: Replace with actual screenshot — sequential flow diagram numbered 1–8 matching the steps below, showing each component handoff from CLI command to fully registered cluster_
 ::
 
 1. `nkp` CLI creates `NutanixCluster`, `NutanixMachineTemplate`, and `Cluster` objects in the Bootstrap (or Management) Cluster
