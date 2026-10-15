@@ -50,6 +50,13 @@ kubectl apply -f security-policy.yaml  # hub / Management Cluster
 :summary: "NKP's fleet management comes from D2iQ — here's why that matters"
 ---
 
+::image-box
+---
+:src: __static__/d21q.png
+:alt: 'D2iQ — the Kubernetes company Nutanix acquired in 2023, creators of Kommander and Konvoy'
+---
+::
+
 NKP's fleet management layer didn't start at Nutanix. It comes from **D2iQ** — a Kubernetes company Nutanix acquired in 2023. D2iQ was the original developer of two open-source projects that now form the core of NKP:
 
 - **Kommander** — the fleet management layer: centralized UI, GitOps, multi-tenancy, policy, observability across all clusters
