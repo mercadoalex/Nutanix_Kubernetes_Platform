@@ -4,6 +4,12 @@ title: "NKP Uses Kubernetes to Manage Kubernetes"
 name: lesson-nkp-architecture-unit-1
 ---
 
+::remark-box
+**NKP — Nutanix Kubernetes Platform** is Nutanix's enterprise Kubernetes fleet management system. Nutanix makes the hyperconverged infrastructure (compute + storage + networking in one box) that many enterprises run their data centres on. NKP is the layer on top that lets you deploy, operate, and govern fleets of Kubernetes clusters on that infrastructure — without writing your own automation.
+
+If you've used EKS, GKE, or AKS, think of NKP as the equivalent for on-premises Nutanix AHV — with the added ability to manage clusters across multiple sites and cloud providers from one control plane.
+::
+
 ## You're about to create a Kubernetes cluster. Where does that request go?
 
 When you run `nkp create cluster`, you're not running a script that SSHes into
