@@ -21,15 +21,12 @@ Instead of SSHing into 10 different clusters to apply the same RBAC policy, a fl
 
 Common implementations in the ecosystem:
 
-| Product | By |
-|---|---|
-| **NKP / Kommander** | Nutanix |
-| **Rancher Fleet** | SUSE / Rancher |
-| **Azure Kubernetes Fleet Manager** | Microsoft |
-| **GKE Fleet** | Google |
-| **Karmada** | CNCF (community) |
-| **SAP Gardener** | SAP |
-| **k0rdent** | Mirantis |
+::image-box
+---
+:src: __static__/K8sFleetManagers.png
+:alt: 'Kubernetes fleet management ecosystem — NKP/Kommander, Rancher Fleet, Azure Kubernetes Fleet Manager, GKE Fleet, Karmada, SAP Gardener, k0rdent'
+---
+::
 
 NKP uses **Kommander** as its fleet management layer — it federates policy, RBAC, add-ons, and access control across all Managed and Attached clusters from a single pane.
 ::
