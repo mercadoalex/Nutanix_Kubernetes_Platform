@@ -10,6 +10,30 @@ name: lesson-nkp-architecture-unit-1
 If you've used EKS, GKE, or AKS, think of NKP as the equivalent for on-premises Nutanix AHV — with the added ability to manage clusters across multiple sites and cloud providers from one control plane.
 ::
 
+::details-box
+---
+:summary: What is Kubernetes fleet management?
+---
+
+**Kubernetes fleet management** is the centralized administration of multiple clusters as a single, unified logical entity — rather than managing each cluster individually with its own access credentials, add-on lifecycle, and policy configuration.
+
+Instead of SSHing into 10 different clusters to apply the same RBAC policy, a fleet manager lets you define it once and propagate it everywhere.
+
+Common implementations in the ecosystem:
+
+| Product | By |
+|---|---|
+| **NKP / Kommander** | Nutanix |
+| **Rancher Fleet** | SUSE / Rancher |
+| **Azure Kubernetes Fleet Manager** | Microsoft |
+| **GKE Fleet** | Google |
+| **Karmada** | CNCF (community) |
+| **SAP Gardener** | SAP |
+| **k0rdent** | Mirantis |
+
+NKP uses **Kommander** as its fleet management layer — it federates policy, RBAC, add-ons, and access control across all Managed and Attached clusters from a single pane.
+::
+
 ## You're about to create a Kubernetes cluster. Where does that request go?
 
 When you run `nkp create cluster`, you're not running a script that SSHes into
