@@ -34,6 +34,19 @@ Common implementations in the ecosystem:
 NKP uses **Kommander** as its fleet management layer — it federates policy, RBAC, add-ons, and access control across all Managed and Attached clusters from a single pane.
 ::
 
+::hint-box
+---
+:summary: Hint 1
+---
+
+NKP's fleet management layer didn't start at Nutanix. It comes from **D2iQ** — a Kubernetes company Nutanix acquired in 2023. D2iQ was the original developer of two open-source projects that now form the core of NKP:
+
+- **Kommander** — the fleet management layer: centralized UI, GitOps, multi-tenancy, policy, observability across all clusters
+- **Konvoy** — the cluster lifecycle manager built on Cluster API (CAPI)
+
+Nutanix wrapped these into **NKP (Nutanix Kubernetes Platform)**, announced at .NEXT in May 2024. The fleet management features (Kommander multi-cluster, Attached Clusters) are available in the **NKP Ultimate** tier.
+::
+
 ## You're about to create a Kubernetes cluster. Where does that request go?
 
 When you run `nkp create cluster`, you're not running a script that SSHes into
