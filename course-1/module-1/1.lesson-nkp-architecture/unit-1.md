@@ -29,6 +29,20 @@ Common implementations in the ecosystem:
 ::
 
 NKP uses **Kommander** as its fleet management layer — it federates policy, RBAC, add-ons, and access control across all Managed and Attached clusters from a single pane.
+
+**What does "federates policy" actually mean?**
+You define a policy once at the fleet level, and Kommander automatically propagates and enforces it across all member clusters — without applying it to each cluster individually.
+
+```bash
+# ❌ Without federation: repeat for every cluster
+kubectl apply -f security-policy.yaml --context cluster-1
+kubectl apply -f security-policy.yaml --context cluster-2
+kubectl apply -f security-policy.yaml --context cluster-N
+
+# ✅ With federation: define once, enforced everywhere
+kubectl apply -f security-policy.yaml  # hub / Management Cluster
+# → automatically synced to all N member clusters
+```
 ::
 
 ::hint-box
