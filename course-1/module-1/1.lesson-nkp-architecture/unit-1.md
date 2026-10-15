@@ -36,7 +36,7 @@ NKP uses **Kommander** as its fleet management layer — it federates policy, RB
 
 ::hint-box
 ---
-:summary: Hint 1
+:summary: "NKP's fleet management comes from D2iQ — here's why that matters"
 ---
 
 NKP's fleet management layer didn't start at Nutanix. It comes from **D2iQ** — a Kubernetes company Nutanix acquired in 2023. D2iQ was the original developer of two open-source projects that now form the core of NKP:
