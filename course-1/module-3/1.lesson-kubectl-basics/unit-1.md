@@ -23,6 +23,14 @@ This lesson uses the pre-loaded cluster (Management Cluster, 4 nodes). No new in
 
 ## Part 1 — The kubectl mental model
 
+::image-box
+---
+:src: __static__/placeholder-kubectl-get-nodes-output.png
+:alt: 'kubectl get nodes showing all cluster nodes with Ready status'
+---
+_TODO: Replace with actual screenshot — Run `kubectl get nodes -o wide` and capture the full terminal output showing vm2–vm5 all in Ready status_
+::
+
 Every Kubernetes resource lives in a **namespace** (or is cluster-scoped). The `kubectl` command follows a consistent pattern:
 
 ```
@@ -75,6 +83,14 @@ kubectl get pods -A
 ---
 
 ## Part 3 — Pods
+
+::image-box
+---
+:src: __static__/placeholder-kubectl-get-pods-all-namespaces.png
+:alt: 'kubectl get pods -A output showing all system pods across namespaces'
+---
+_TODO: Replace with actual screenshot — Run `kubectl get pods -A` and capture the full terminal output showing kube-system, cilium, and other system pods all Running_
+::
 
 ### 3.1 List pods
 
@@ -310,6 +326,14 @@ kubectl delete pods -l app=nginx
 ---
 
 ## Part 7 — Events and troubleshooting
+
+::image-box
+---
+:src: __static__/placeholder-kubectl-describe-node-output.png
+:alt: 'kubectl describe node output showing Conditions, Allocatable resources, and Non-terminated Pods sections'
+---
+_TODO: Replace with actual screenshot — Run `kubectl describe node vm3` and capture the terminal output, scrolled to show the Conditions table and the Non-terminated Pods section_
+::
 
 ### 7.1 Cluster-wide events
 

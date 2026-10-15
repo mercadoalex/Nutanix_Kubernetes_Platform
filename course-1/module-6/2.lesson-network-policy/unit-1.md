@@ -87,6 +87,14 @@ Apply a **default-deny** policy to the `backend` namespace. This blocks all ingr
 
 ### 2.1 Apply the default-deny policy
 
+::image-box
+---
+:src: __static__/placeholder-kubectl-get-networkpolicies-output.png
+:alt: 'kubectl get networkpolicies output listing policies across backend namespace'
+---
+_TODO: Replace with actual screenshot — terminal showing `kubectl get networkpolicies -n backend` with default-deny-ingress and allow-from-frontend policies listed, showing their pod-selector and age_
+::
+
 ```yaml
 # default-deny-backend.yaml
 apiVersion: networking.k8s.io/v1
@@ -105,6 +113,14 @@ kubectl apply -f default-deny-backend.yaml
 ```
 
 ### 2.2 Verify traffic is now blocked
+
+::image-box
+---
+:src: __static__/placeholder-curl-blocked-network-policy-terminal.png
+:alt: 'Terminal showing curl connection timeout blocked by NetworkPolicy default-deny'
+---
+_TODO: Replace with actual screenshot — terminal showing the `kubectl run curl` command and the resulting `curl: (28) Connection timed out` error, confirming the default-deny NetworkPolicy is in effect_
+::
 
 ```bash
 kubectl run curl --image=curlimages/curl \
@@ -232,6 +248,15 @@ Backend pods can now only make outbound DNS queries — nothing else.
 ---
 
 ## Part 5 — Cilium L7 NetworkPolicy
+
+::image-box
+---
+:src: __static__/placeholder-cilium-l7-policy-enforcement-terminal.png
+:alt: 'Terminal showing curl to /public succeeding and /private returning Access denied enforced by Cilium L7 policy'
+---
+_TODO: Replace with actual screenshot — terminal showing two consecutive curl commands: `curl /public` returning "public", then `curl /private` returning "Access denied", demonstrating Cilium HTTP path enforcement_
+::
+
 
 Standard Kubernetes NetworkPolicy operates at L3/L4 (IP + port). **CiliumNetworkPolicy** extends this to L7 — you can allow or deny specific HTTP paths and methods.
 

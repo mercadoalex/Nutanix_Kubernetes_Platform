@@ -87,6 +87,14 @@ One physical GPU is time-sliced at the hypervisor level into multiple vGPU insta
 
 ## Part B — Enabling the GPU Operator on NKP
 
+::image-box
+---
+:src: __static__/placeholder-nvidia-smi-gpu-node-output.png
+:alt: 'nvidia-smi output inside a CUDA container showing GPU name, driver version, and CUDA version'
+---
+_TODO: Replace with actual screenshot — terminal showing `kubectl logs cuda-vector-add` output from the nvidia-smi command: GPU model (e.g. NVIDIA A100), driver version, CUDA version, memory total/used, and running processes table_
+::
+
 > 💻 **Interactive** — run from vm1 (bootstrap) against the cluster on vm2–vm5.
 
 ### How the GPU Operator works
@@ -169,6 +177,14 @@ toolkit:
 ---
 
 ## Part C — Verifying GPU availability
+
+::image-box
+---
+:src: __static__/placeholder-kubectl-describe-node-gpu-capacity.png
+:alt: 'kubectl describe node output showing nvidia.com/gpu in Capacity and Allocatable sections'
+---
+_TODO: Replace with actual screenshot — terminal showing `kubectl describe node <gpu-node>` scrolled to the Capacity/Allocatable section with `nvidia.com/gpu: 1` (or more) visible, plus the nvidia.com/gpu.product and nvidia.com/gpu.memory node labels from GPU Feature Discovery_
+::
 
 ```bash
 # 1. Check GPU Operator pods are all Running
@@ -440,6 +456,14 @@ kubectl get nodes -o custom-columns='NAME:.metadata.name,GPU:.status.capacity.nv
 ```
 
 ### Test GPU-aware scheduling
+
+::image-box
+---
+:src: __static__/placeholder-gpu-workload-pod-logs.png
+:alt: 'kubectl logs output from a GPU workload pod showing CUDA or nvidia-smi results'
+---
+_TODO: Replace with actual screenshot — terminal showing `kubectl logs cuda-vector-add` (or the fake-GPU scheduled pod) with the pod status Running on the correct node visible in `kubectl get pod -o wide`, and the GPU resource consumption shown in `kubectl describe node` Allocated resources section_
+::
 
 ```bash
 # Schedule a pod that requests 1 GPU — it will land on a fake-GPU node

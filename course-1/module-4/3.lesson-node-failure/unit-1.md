@@ -40,6 +40,14 @@ vm5  172.16.0.14   worker-03
 
 ## Part 1 — Deploy a workload
 
+::image-box
+---
+:src: __static__/placeholder-kubectl-get-pods-spread-across-nodes.png
+:alt: 'kubectl get pods -o wide showing 6 failure-test pods evenly distributed 2-per-node across vm3, vm4, vm5'
+---
+_TODO: Replace with actual screenshot — After applying failure-test.yaml, run `kubectl get pods -l app=failure-test -o wide` and capture the output showing exactly 2 pods per worker node before any failure is introduced_
+::
+
 ### 1.1 Create a Deployment with a PodDisruptionBudget
 
 ```yaml
@@ -124,6 +132,15 @@ systemctl stop rke2-agent
 
 ## Part 3 — Watch Kubernetes respond
 
+::image-box
+---
+:src: __static__/placeholder-kubectl-get-nodes-notready-after-failure.png
+:alt: 'kubectl get nodes -w output showing vm4 transitioning from Ready to NotReady after agent is stopped'
+---
+_TODO: Replace with actual screenshot — Run `kubectl get nodes -w` on vm1 while stopping rke2-agent on vm4 and capture the watch output showing vm4 flip from Ready to NotReady after ~40 seconds_
+::
+
+
 Back on **vm1**, watch what happens:
 
 ### 3.1 Node status changes
@@ -200,6 +217,15 @@ Key events to find:
 
 ## Part 4 — Recover vm4
 
+::image-box
+---
+:src: __static__/placeholder-kubectl-get-pods-rescheduling-after-failure.png
+:alt: 'kubectl get pods showing Terminating pods on vm4 alongside new Pending then Running replacement pods on vm3 and vm5'
+---
+_TODO: Replace with actual screenshot — While vm4 is down, run `kubectl get pods -l app=failure-test -o wide` and capture the output mid-rescheduling showing some pods Terminating on vm4, others Pending, and the healthy pods Running on vm3/vm5_
+::
+
+
 ### 4.1 Restart the RKE2 agent on vm4
 
 Switch to the **vm4** terminal:
@@ -249,6 +275,14 @@ Pods are now redistributed evenly across vm3, vm4, and vm5.
 ---
 
 ## Part 5 — Key timers explained
+
+::image-box
+---
+:src: __static__/placeholder-kubectl-get-nodes-after-recovery.png
+:alt: 'kubectl get nodes showing vm4 back to Ready status after rke2-agent is restarted'
+---
+_TODO: Replace with actual screenshot — After `systemctl start rke2-agent` on vm4, run `kubectl get nodes` on vm1 and capture the output showing all four nodes Ready again, with vm4 rejoined_
+::
 
 | Timer | Default | What triggers it |
 |---|---|---|

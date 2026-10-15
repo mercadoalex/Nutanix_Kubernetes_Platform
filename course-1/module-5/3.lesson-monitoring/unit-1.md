@@ -166,6 +166,14 @@ Login: `admin` / `nkp-lab-grafana`
 
 ### 2.3 Explore pre-built dashboards
 
+::image-box
+---
+:src: __static__/placeholder-grafana-cluster-dashboard.png
+:alt: 'Grafana Kubernetes Compute Resources Cluster dashboard showing CPU and memory usage across all nodes'
+---
+_TODO: Replace with actual screenshot — Grafana → Dashboards → Kubernetes / Compute Resources / Cluster, showing the cluster-level CPU usage graph, memory usage graph, and per-namespace network traffic panels all populated with real data_
+::
+
 Navigate to **Dashboards** → **Browse**. Key dashboards:
 
 | Dashboard | What it shows |
@@ -185,6 +193,15 @@ Click **Kubernetes / Compute Resources / Cluster**. You will see:
 ---
 
 ## Part 3 — PromQL queries
+
+::image-box
+---
+:src: __static__/placeholder-prometheus-targets-page.png
+:alt: 'Prometheus targets page showing all scrape targets and their UP status'
+---
+_TODO: Replace with actual screenshot — Prometheus UI (port 9090) → Status → Targets, showing node-exporter targets for all 4 nodes (vm2–vm5) and kube-state-metrics all with state=UP and last scrape time_
+::
+
 
 Prometheus uses **PromQL** (Prometheus Query Language) to select and aggregate metrics.
 
@@ -284,6 +301,14 @@ kubectl exec -n monitoring \
 ```
 
 ### 4.3 View firing alerts
+
+::image-box
+---
+:src: __static__/placeholder-alertmanager-alerts-ui.png
+:alt: 'Alertmanager UI showing active alerts grouped by severity'
+---
+_TODO: Replace with actual screenshot — Alertmanager UI (port 9093) → Alerts view, showing the NodeMemoryHigh alert in Firing or Pending state with the instance label, severity=warning, and the humanized memory percentage in the description_
+::
 
 In the Grafana sidebar: **Alerting** → **Alert rules** → look for `NodeMemoryHigh`.
 

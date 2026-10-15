@@ -27,6 +27,14 @@ This is the core insight. Once it clicks, everything else in NKP makes sense.
 
 NKP defines four distinct roles for clusters. Each has a single job.
 
+::image-box
+---
+:src: __static__/placeholder-four-cluster-roles-overview.png
+:alt: 'NKP four cluster roles diagram showing Bootstrap, Management, Workload, and Attached clusters with directional arrows between them'
+---
+_TODO: Replace with actual screenshot — diagram showing Bootstrap→Management→Workload→Attached with labeled arrows indicating the lifecycle relationships (Bootstrap creates Management, Management creates Workload, Management federates Attached)_
+::
+
 ### 1. Bootstrap Cluster — *Clúster de arranque*
 
 A **temporary** cluster that exists only during initial installation.
@@ -81,6 +89,14 @@ An **existing** cluster (EKS, GKE, on-prem RKE2) brought under NKP management.
 
 Each layer has a specific job:
 
+::image-box
+---
+:src: __static__/placeholder-nkp-full-stack-diagram.png
+:alt: 'NKP full technology stack diagram with layers from Nutanix AHV at the bottom up through AOS, Prism Central, Rocky Linux, RKE2, CAPI/CAPX/CAREN, Flux CD, and Kommander at the top'
+---
+_TODO: Replace with actual screenshot — layered stack diagram with all components from AHV/AOS/Prism Central at the bottom up to Kommander at the top, with brief role labels for each layer_
+::
+
 ```
 ┌─────────────────────────────────────────────────────┐
 │  Kommander          — fleet UI, workspaces, RBAC    │
@@ -115,6 +131,14 @@ Each layer has a specific job:
 ## CAPI, CAPX, and CAREN — how they divide the work
 
 These three components are often confused because they all live inside the same cluster and cooperate tightly. Here is how to tell them apart:
+
+::image-box
+---
+:src: __static__/placeholder-capi-capx-caren-relationship.png
+:alt: 'Relationship diagram showing CAPI as the central framework with CAPX as the Nutanix infrastructure provider below it and CAREN as the lifecycle policy layer intercepting requests between the CLI and CAPX'
+---
+_TODO: Replace with actual screenshot — component relationship diagram: nkp CLI → CAREN (hooks) → CAPI (core controller) → CAPX (Nutanix provider) → Prism Central, with each component's role annotated_
+::
 
 ### Cluster API (CAPI) — the framework
 
@@ -193,6 +217,14 @@ nkp create cluster nutanix \
 
 Here is what happens, step by step:
 
+::image-box
+---
+:src: __static__/placeholder-cluster-creation-request-flow.png
+:alt: 'End-to-end cluster creation request flow diagram from nkp CLI through CAREN, CAPI, CAPX, Prism Central, AHV VM boot, RKE2 startup, Flux CD add-on deployment, and Kommander registration'
+---
+_TODO: Replace with actual screenshot — sequential flow diagram numbered 1–8 matching the steps below, showing each component handoff from CLI command to fully registered cluster_
+::
+
 1. `nkp` CLI creates `NutanixCluster`, `NutanixMachineTemplate`, and `Cluster` objects in the Bootstrap (or Management) Cluster
 2. CAPI controller sees the new `Cluster` object → starts reconciling
 3. Nutanix provider calls Prism Central API → creates VMs on AHV
@@ -209,6 +241,14 @@ Total time: **45–60 minutes** on a real Nutanix AHV cluster.
 ## The Nutanix infrastructure layer
 
 NKP doesn't run in a vacuum — it sits on top of the **Nutanix Cloud Infrastructure (NCI)** stack. Understanding this layer is essential because NKP connects to it at multiple points.
+
+::image-box
+---
+:src: __static__/placeholder-nci-stack-diagram.png
+:alt: 'NCI stack diagram showing AHV hypervisor, AOS storage OS with CVM, and Prism Central, with annotations indicating where NKP node VMs run, where the CSI driver connects, and where CAPX and CAREN API calls land'
+---
+_TODO: Replace with actual screenshot — three-column diagram for AHV, AOS/CVM, and Prism Central, each with an annotation showing which NKP component connects to it and how_
+::
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
@@ -298,6 +338,14 @@ NDK is configured via its own CRDs (`DataServicePolicy`, `ProtectionPolicy`, etc
 ## In the lab
 
 In this course's iximious Flexbox lab, we simulate steps 3–8 manually:
+
+::image-box
+---
+:src: __static__/placeholder-flexbox-lab-topology.png
+:alt: 'Flexbox lab topology diagram showing 5 VMs: vm1 as operator workstation with nkp CLI and kubectl, vm2 as RKE2 control plane, vm3 through vm5 as RKE2 worker nodes, each with their IP addresses and assigned roles labeled'
+---
+_TODO: Replace with actual screenshot — network topology diagram of the 5-VM Flexbox lab environment with IP addresses, hostnames, and role labels (operator workstation, control plane, worker ×3)_
+::
 
 - vm2 plays the role of the control plane VM (already has RKE2 server installed)
 - vm3–vm5 play worker VMs (already have RKE2 agent installed)

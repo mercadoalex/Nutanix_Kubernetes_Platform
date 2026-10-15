@@ -30,6 +30,14 @@ After `nkp create cluster` succeeds, your first practical task is always the sam
 
 ## Part 1 — The `nkp` CLI
 
+::image-box
+---
+:src: __static__/placeholder-nkp-help-output.png
+:alt: 'Terminal showing nkp --help output listing all top-level subcommands'
+---
+_TODO: Replace with actual screenshot — Terminal output of `nkp --help` showing the full list of top-level commands (create, delete, get, move, describe, check, etc.) with their one-line descriptions_
+::
+
 ### 1.1 Verify the installation
 
 ```bash
@@ -69,6 +77,14 @@ The `--help` output for `nkp create cluster` lists every flag — the most impor
 ---
 
 ## Part 2 — Getting a kubeconfig
+
+::image-box
+---
+:src: __static__/placeholder-nkp-get-kubeconfig-output.png
+:alt: 'Terminal showing nkp get kubeconfig command writing YAML to a file successfully'
+---
+_TODO: Replace with actual screenshot — Terminal running `nkp get kubeconfig --cluster-name=nkp-lab > ~/clusters/nkp-lab.kubeconfig` followed by `kubectl --kubeconfig ... get nodes` returning all nodes Ready_
+::
 
 In production, after `nkp create cluster` completes you retrieve the kubeconfig with:
 
@@ -175,6 +191,14 @@ mv ~/.kube/merged.kubeconfig ~/.kube/config
 
 ## Part 4 — Cluster identity commands
 
+::image-box
+---
+:src: __static__/placeholder-nkp-describe-cluster-output.png
+:alt: 'Terminal showing nkp describe cluster output with component health status'
+---
+_TODO: Replace with actual screenshot — Terminal output of `nkp describe cluster --cluster-name=nkp-lab` showing the cluster health summary: CAPI object status, Flux reconciliation status, and add-on health indicators_
+::
+
 These are the first commands to run after connecting to any cluster to confirm you are talking to the right one.
 
 ### 4.1 Confirm which cluster you are connected to
@@ -263,6 +287,14 @@ PS1='\u@\h \W $(parse_k8s_context)$ '
 ---
 
 ## Summary
+
+::image-box
+---
+:src: __static__/placeholder-kommander-cluster-list.png
+:alt: 'Kommander UI cluster list page showing registered clusters with their status'
+---
+_TODO: Replace with actual screenshot — Kommander → Clusters page listing nkp-management and any attached workload clusters, showing cluster name, status (Ready), Kubernetes version, and node count columns_
+::
 
 | Task | Command |
 |---|---|

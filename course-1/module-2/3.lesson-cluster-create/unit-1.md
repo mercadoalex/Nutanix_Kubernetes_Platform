@@ -47,6 +47,14 @@ name: 3-lesson-cluster-create-unit-1
 
 ## Part A — Run `nkp create cluster`
 
+::image-box
+---
+:src: __static__/placeholder-nkp-create-cluster-output.png
+:alt: 'Terminal showing nkp create cluster nutanix command output with CAPI resource creation log lines'
+---
+_TODO: Replace with actual screenshot — Terminal immediately after running `nkp create cluster nutanix ...`, showing the INFO lines confirming Cluster, NutanixCluster, MachineDeployment, and NutanixMachineTemplate objects were created in the bootstrap cluster_
+::
+
 This single command drives the entire cluster provisioning flow through Prism Central.
 
 ```bash
@@ -98,6 +106,14 @@ CAPC controller watches these resources
 
 ## Part B — Watch provisioning with k9s
 
+::image-box
+---
+:src: __static__/placeholder-k9s-capi-machines-provisioning.png
+:alt: 'k9s :machines view showing 7 NKP cluster nodes moving from Provisioning to Running state'
+---
+_TODO: Replace with actual screenshot — k9s :machines view listing nkp-management-cp-0 through nkp-management-md-0-3, with Phase column showing a mix of Provisioning and Running states as VMs come up_
+::
+
 In a second terminal on the jump host, open `k9s` pointed at the Bootstrap Cluster:
 
 ```bash
@@ -135,6 +151,14 @@ nkp-management-md-0-3  (worker 4 of 4)
 ---
 
 ## Part C — Wait for the cluster to be Ready
+
+::image-box
+---
+:src: __static__/placeholder-prism-central-nkp-vms.png
+:alt: 'Prism Central VM list showing all 7 NKP management cluster VMs booting'
+---
+_TODO: Replace with actual screenshot — Prism Central → Compute & Storage → VMs, filtered to show the 3 control-plane and 4 worker VMs (nkp-management-cp-0..2 and nkp-management-md-0-0..3) with Power State On_
+::
 
 ```bash
 kubectl wait cluster/${CLUSTER_NAME} \
@@ -189,6 +213,14 @@ All 7 nodes `Ready`. 3 control plane + 4 workers = HA cluster.
 ---
 
 ## Part E — Pivot: `nkp move`
+
+::image-box
+---
+:src: __static__/placeholder-nkp-move-pivot-output.png
+:alt: 'Terminal showing nkp move command output with INFO lines for each CAPI object being pivoted'
+---
+_TODO: Replace with actual screenshot — Terminal running `nkp move --to-kubeconfig ~/clusters/mgmt.kubeconfig`, showing INFO lines for Moving Cluster, NutanixCluster, MachineDeployments, Machines, and the final "Pivot complete" success message_
+::
 
 **This is the most important step.** The CAPI controllers are currently running in the Bootstrap Cluster (the `kind` cluster on your jump host). `nkp move` migrates them — and all the CAPI objects that describe the Management Cluster — **into the Management Cluster itself**.
 
@@ -285,6 +317,14 @@ The Management Cluster sees and manages itself. This is the **self-managed** sta
 ---
 
 ## Part H — Access Kommander
+
+::image-box
+---
+:src: __static__/placeholder-kommander-dashboard-initial.png
+:alt: 'Kommander dashboard showing the management cluster registered and healthy after initial deployment'
+---
+_TODO: Replace with actual screenshot — Kommander web UI at /dkp/kommander/dashboard, showing the nkp-management cluster tile with status Ready, cluster overview metrics visible_
+::
 
 Kommander (the NKP multi-cluster management UI) is deployed as part of the Management Cluster.
 

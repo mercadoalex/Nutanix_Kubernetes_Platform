@@ -57,6 +57,14 @@ kubectl apply -f deployment.yaml
 
 ## Part 1 — RBAC
 
+::image-box
+---
+:src: __static__/placeholder-kubectl-get-clusterroles-output.png
+:alt: 'kubectl get clusterroles output listing built-in and custom ClusterRoles'
+---
+_TODO: Replace with actual screenshot — terminal showing `kubectl get clusterroles` output with the built-in cluster-admin, edit, view roles visible alongside the custom cluster-pod-reader role created in this lesson_
+::
+
 ### 1.1 Core objects
 
 | Object | Scope | What it defines |
@@ -113,6 +121,14 @@ kubectl apply -f readonly-binding.yaml
 ```
 
 ### 1.4 Test the permissions
+
+::image-box
+---
+:src: __static__/placeholder-kubectl-auth-can-i-output.png
+:alt: 'kubectl auth can-i output showing yes and no responses for different permission checks'
+---
+_TODO: Replace with actual screenshot — terminal showing three consecutive `kubectl auth can-i` commands: list pods (yes), delete pods (no), list pods in kube-system (no), demonstrating the namespace-scoped Role boundary_
+::
 
 Use `kubectl auth can-i` to check what a ServiceAccount is allowed to do:
 
@@ -325,6 +341,14 @@ kubectl apply -f require-limits-constraint.yaml
 ```
 
 ### 2.4 Test — deploy without limits (should be blocked)
+
+::image-box
+---
+:src: __static__/placeholder-opa-gatekeeper-constraint-violation.png
+:alt: 'Terminal showing OPA Gatekeeper admission webhook blocking a deployment missing resource limits'
+---
+_TODO: Replace with actual screenshot — terminal showing `kubectl create deployment no-limits --image=nginx:alpine` rejected with the Gatekeeper admission webhook error listing both the CPU and memory limits violation messages_
+::
 
 ```bash
 kubectl create deployment no-limits --image=nginx:alpine

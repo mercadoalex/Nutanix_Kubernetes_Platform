@@ -185,6 +185,14 @@ kubectl apply -f gitops-source.yaml
 flux get source git -n flux-system
 ```
 
+::image-box
+---
+:src: __static__/placeholder-flux-get-sources-output.png
+:alt: 'flux get source git terminal output showing GitRepository synced to main branch'
+---
+_TODO: Replace with actual screenshot — terminal showing `flux get source git -n flux-system` with the nkp-gitops source listed, READY=True, and the current commit SHA_
+::
+
 ```
 NAME         REVISION        SUSPENDED  READY  MESSAGE
 nkp-gitops   main/abc1234    False      True   stored artifact for revision...
@@ -265,6 +273,14 @@ git push origin main
 
 ### 4.2 Watch Flux apply the change
 
+::image-box
+---
+:src: __static__/placeholder-flux-git-push-reconcile-terminal.png
+:alt: 'Terminal showing git push followed by flux reconcile kustomization triggering a rolling update'
+---
+_TODO: Replace with actual screenshot — split or sequential terminal view: left showing `git push origin main`, right showing `flux reconcile kustomization apps` output followed by `kubectl rollout status deployment/web -n web` completing successfully_
+::
+
 Flux polls every 1 minute. Force an immediate reconciliation:
 
 ```bash
@@ -306,6 +322,15 @@ web-xxx-aaa    1/1     Running    ← only 1 pod
 ```
 
 ### 5.2 Wait for Flux to correct it
+
+::image-box
+---
+:src: __static__/placeholder-flux-get-kustomizations-sync-status.png
+:alt: 'flux get kustomizations output showing sync status and applied revisions'
+---
+_TODO: Replace with actual screenshot — terminal showing `flux get kustomization -n flux-system` with the apps kustomization listed, READY=True, the current revision SHA, and Applied revision message confirming drift was corrected_
+::
+
 
 Flux reconciles every 1 minute. Watch:
 

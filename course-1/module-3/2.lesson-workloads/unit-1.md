@@ -28,6 +28,14 @@ All steps run against the pre-loaded cluster from Lesson 3.1. No new infrastruct
 
 ## Part 1 — Deployments
 
+::image-box
+---
+:src: __static__/placeholder-kubectl-apply-deployment-output.png
+:alt: 'kubectl create deployment command output showing deployment created'
+---
+_TODO: Replace with actual screenshot — Run `kubectl create deployment web --image=nginx:alpine --replicas=3` and capture the terminal confirming "deployment.apps/web created"_
+::
+
 A Deployment describes a desired number of identical pod replicas and manages rolling updates and rollbacks.
 
 ### 1.1 Create a Deployment
@@ -90,6 +98,14 @@ kubectl delete deployment web
 ---
 
 ## Part 2 — Services
+
+::image-box
+---
+:src: __static__/placeholder-kubectl-get-pods-running-deployment.png
+:alt: 'kubectl get pods -o wide showing deployment pods spread across nodes in Running state'
+---
+_TODO: Replace with actual screenshot — Run `kubectl get pods -l app=web -o wide` and capture the output showing 3 Running pods distributed across vm3, vm4, vm5 with their node column visible_
+::
 
 A Service gives a stable IP and DNS name to a group of pods. Without a Service, pod IPs change every restart.
 
@@ -162,6 +178,14 @@ kubectl delete service app-svc app-nodeport
 ---
 
 ## Part 3 — ConfigMaps
+
+::image-box
+---
+:src: __static__/placeholder-kubectl-expose-service-and-curl.png
+:alt: 'kubectl expose creating a ClusterIP service and curl hitting the service endpoint from a test pod'
+---
+_TODO: Replace with actual screenshot — Run `kubectl expose deployment app --port=80 --name=app-svc` then the `kubectl run curl ...` one-liner and capture both commands and their output showing the nginx welcome page or HTTP 200_
+::
 
 ConfigMaps decouple configuration from container images. You change the ConfigMap — not the image — when config needs updating.
 
@@ -251,6 +275,14 @@ kubectl delete configmap app-config nginx-config
 ---
 
 ## Part 4 — PersistentVolumeClaims
+
+::image-box
+---
+:src: __static__/placeholder-kubectl-get-service-nodeport.png
+:alt: 'kubectl get service showing NodePort service with assigned port, and curl hitting the service from the node IP'
+---
+_TODO: Replace with actual screenshot — Run `kubectl get service app-nodeport` and capture the output showing the NodePort entry (e.g. 80:31234/TCP), then run `curl http://172.16.0.11:<port>/` and capture the nginx response_
+::
 
 A PersistentVolumeClaim (PVC) requests durable storage from the cluster. The storage survives pod restarts — unlike the container filesystem.
 

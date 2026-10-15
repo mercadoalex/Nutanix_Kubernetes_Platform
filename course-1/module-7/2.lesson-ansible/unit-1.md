@@ -83,6 +83,14 @@ ssh -i ~/.ssh/nkp_lab laborant@172.16.0.11 hostname
 
 ## Part 3 — Create the inventory
 
+::image-box
+---
+:src: __static__/placeholder-ansible-inventory-file.png
+:alt: 'Ansible inventory.ini file showing NKP cluster node groups and connection variables'
+---
+_TODO: Replace with actual screenshot — terminal or editor showing the contents of `inventory.ini` with the [controlplane], [workers], and [nkp_nodes:children] groups clearly visible, alongside the ansible_user and ansible_ssh_private_key_file vars_
+::
+
 ```bash
 mkdir -p ~/ansible-nkp
 cat > ~/ansible-nkp/inventory.ini << 'EOF'
@@ -123,6 +131,14 @@ vm5 | SUCCESS => {"ping": "pong"}
 ---
 
 ## Part 4 — Ad-hoc commands
+
+::image-box
+---
+:src: __static__/placeholder-ansible-adhoc-command-output.png
+:alt: 'ansible ad-hoc command output showing responses from all four NKP cluster nodes'
+---
+_TODO: Replace with actual screenshot — terminal showing `ansible nkp_nodes -i inventory.ini -m ping` output with all four VMs (vm2–vm5) returning SUCCESS with the pong response, or `ansible nkp_nodes -m command -a "uname -r"` showing the kernel version from each node_
+::
 
 Run commands across all nodes without a playbook:
 
@@ -200,6 +216,14 @@ cat > ~/ansible-nkp/preflight.yaml << 'EOF'
         success_msg: "✓ RKE2 installed"
 EOF
 ```
+
+::image-box
+---
+:src: __static__/placeholder-ansible-playbook-run-output.png
+:alt: 'ansible-playbook run output showing preflight checks passing on all NKP nodes'
+---
+_TODO: Replace with actual screenshot — terminal showing `ansible-playbook -i inventory.ini preflight.yaml` output with the PLAY RECAP section visible, all nodes showing ok= tasks and 0 failed, with the ✓ success messages from each assert task visible in the output_
+::
 
 Run it:
 

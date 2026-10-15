@@ -44,6 +44,14 @@ This means zero post-boot provisioning of the OS layer — the image is ready to
 
 ## Step 1 — Download the image
 
+::image-box
+---
+:src: __static__/placeholder-nutanix-portal-nkp-os-images.png
+:alt: 'Nutanix Support Portal downloads page showing the NKP Operating System Images section with Rocky Linux entries'
+---
+_TODO: Replace with actual screenshot — my.nutanix.com → Downloads → NKP Operating System Images, showing the Rocky Linux 9.7 CIS Hardened for AHV entry with the download button and file size visible_
+::
+
 1. Log in to **[my.nutanix.com](https://my.nutanix.com)**.
 2. Navigate to **Downloads**.
 3. In the product dropdown, select **"NKP Operating System Images"**.
@@ -68,6 +76,14 @@ nkp-rocky-9.7-release-cis-1.34.3-20260504011927.qcow2
 
 ## Step 2 — Upload to Prism Central
 
+::image-box
+---
+:src: __static__/placeholder-prism-central-image-upload-dialog.png
+:alt: 'Prism Central Add Image dialog with Image Type set to Disk and the qcow2 filename auto-populated'
+---
+_TODO: Replace with actual screenshot — Prism Central → Images → Add Image dialog, showing Image Type dropdown set to "Disk", the qcow2 filename auto-populated in the Name field, and the file selector pointing at the uploaded file_
+::
+
 1. Log in to **Prism Central**.
 2. Go to **Infrastructure → Compute & Storage → Images** (or search "Images" in the top bar).
 3. Click **Add Image**.
@@ -81,6 +97,14 @@ Once the image status shows **Active**, it is ready for use by the NKP bootstrap
 ---
 
 ## Quick Validation
+
+::image-box
+---
+:src: __static__/placeholder-acli-image-list-output.png
+:alt: 'CVM terminal showing acli image.list output with the nkp-rocky qcow2 image listed as Active'
+---
+_TODO: Replace with actual screenshot — SSH session on a CVM running `acli image.list | grep nkp-rocky`, output showing the full image name, type DISK, and state ACTIVE_
+::
 
 After upload, confirm the image is visible and correctly typed:
 

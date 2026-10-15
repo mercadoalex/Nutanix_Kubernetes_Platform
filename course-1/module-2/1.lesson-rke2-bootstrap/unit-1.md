@@ -17,6 +17,14 @@ You're going to start it and watch a Kubernetes cluster come to life.
 
 When you run `systemctl start rke2-server`, one process starts and it launches all of these inside it:
 
+::image-box
+---
+:src: __static__/placeholder-rke2-server-process-tree.png
+:alt: 'Process tree diagram showing rke2-server and all child components it launches: etcd, kube-apiserver, kube-controller-manager, kube-scheduler, kubelet, kube-proxy, containerd, and Cilium'
+---
+_TODO: Replace with actual screenshot — diagram or `pstree`/`ps` output showing rke2-server as the parent process with all child components branching from it_
+::
+
 ```
 rke2-server
 ├── etcd                    — the cluster database (stores all K8s state)
@@ -39,6 +47,16 @@ RKE2 has two modes — **server** runs on control plane nodes, **agent** runs on
 You start `rke2-server` on vm2 first. Once it's up you start `rke2-agent` on vm3–5, pointing them at vm2. That gives you a 1 control plane + 3 worker cluster.
 
 ### NKP vs AWS — who owns the control plane?
+
+
+::image-box
+---
+:src: __static__/placeholder-nkp-vs-eks-control-plane.png
+:alt: 'Side-by-side comparison diagram: AWS EKS with a managed invisible control plane on the left, and NKP on AHV with self-managed control plane VMs on the right'
+---
+_TODO: Replace with actual screenshot — side-by-side architecture diagram contrasting AWS EKS managed control plane (invisible nodes) with NKP self-managed control plane VMs on AHV (nkp-cp-1/2/3 + kube-vip VIP)_
+::
+
 
 On AWS EKS the control plane is **managed** — AWS runs etcd and kube-apiserver invisibly on their infrastructure. You never see the control plane nodes, you can't SSH into them.
 
@@ -90,6 +108,14 @@ Three important settings:
 
 ## 2. Start RKE2 server
 
+::image-box
+---
+:src: __static__/placeholder-rke2-server-journalctl-startup.png
+:alt: 'Terminal screenshot of journalctl -u rke2-server output showing the startup sequence: etcd starting, kube-apiserver starting, and Node vm2 registered messages'
+---
+_TODO: Replace with actual screenshot — `journalctl -u rke2-server -f` output captured during first boot, showing the full startup sequence through "Node vm2 registered"_
+::
+
 ```bash
 # On vm2 (controlplane)
 systemctl start rke2-server
@@ -115,6 +141,14 @@ Wait until you see `Node vm2 registered` before continuing.
 ---
 
 ## 3. Verify the control plane is up
+
+::image-box
+---
+:src: __static__/placeholder-kubectl-get-nodes-vm2-ready.png
+:alt: 'Terminal screenshot of kubectl get nodes output showing vm2 in Ready status with control-plane,etcd,master roles'
+---
+_TODO: Replace with actual screenshot — `kubectl get nodes` output on vm2 showing a single node (vm2) with STATUS Ready and ROLES control-plane,etcd,master_
+::
 
 ```bash
 # On vm2 — RKE2 ships its own kubectl
@@ -155,6 +189,14 @@ You should see vm2 Ready from vm1. From now on, run all `kubectl` commands from 
 ---
 
 ## 5. Watch with k9s
+
+::image-box
+---
+:src: __static__/placeholder-k9s-system-pods-all-namespaces.png
+:alt: 'Screenshot of the k9s terminal UI showing system pods across all namespaces, including etcd-vm2, kube-apiserver-vm2, kube-controller-manager-vm2, kube-scheduler-vm2, cilium, and coredns pods all in Running state'
+---
+_TODO: Replace with actual screenshot — k9s TUI with `0` pressed to show all namespaces, capturing all system pods in Running state (etcd-vm2, kube-apiserver-vm2, kube-controller-manager-vm2, kube-scheduler-vm2, cilium-*, coredns-*)_
+::
 
 ```bash
 # On vm1

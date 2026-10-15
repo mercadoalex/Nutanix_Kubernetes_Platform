@@ -54,6 +54,14 @@ All five VMs share the `172.16.0.0/24` network. The RKE2 registration port is **
 
 ## Part 1 — Start the Bootstrap Cluster (vm1)
 
+::image-box
+---
+:src: __static__/placeholder-kind-bootstrap-cluster-docker-ps.png
+:alt: 'docker ps output on vm1 showing the kind bootstrap cluster container running'
+---
+_TODO: Replace with actual screenshot — After `nkp create bootstrap` completes, run `docker ps` on vm1 and capture the output showing the kind container (nkp-bootstrap-control-plane) in Up status_
+::
+
 Open a terminal on **vm1**.
 
 ### 1.1 Verify tooling
@@ -109,6 +117,15 @@ You should see the CAPI core controllers, CAPX (Cluster API Provider for Nutanix
 ---
 
 ## Part 2 — Start the RKE2 server on vm2
+
+::image-box
+---
+:src: __static__/placeholder-capi-pods-running-capi-system.png
+:alt: 'kubectl get pods -n capi-system showing CAPI core controllers and Nutanix provider pods all Running'
+---
+_TODO: Replace with actual screenshot — Run `kubectl get pods -n capi-system` and `kubectl get pods -n capx-system` on vm1 and capture the output showing all controller pods in Running state_
+::
+
 
 Switch to the **vm2** terminal.
 
@@ -240,6 +257,15 @@ All four nodes `Ready`. The Management Cluster is operational.
 
 ## Part 4 — Pivot (vm1)
 
+::image-box
+---
+:src: __static__/placeholder-kubectl-get-nodes-all-four-ready.png
+:alt: 'kubectl get nodes showing all four cluster nodes (vm2 control-plane, vm3-vm5 workers) in Ready status after pivot'
+---
+_TODO: Replace with actual screenshot — After copying and fixing the kubeconfig, run `kubectl get nodes` from vm1 pointing at the Management Cluster and capture the output showing vm2 (control-plane,etcd,master) and vm3–vm5 (workers) all Ready_
+::
+
+
 Back on **vm1**. This is the logical equivalent of `nkp move` — you stop using the Bootstrap Cluster as your control point and switch to the Management Cluster directly.
 
 ### 4.1 Copy the kubeconfig from vm2
@@ -360,6 +386,15 @@ kubectl delete pod nginx
 ---
 
 ## What just happened — the pivot explained
+
+::image-box
+---
+:src: __static__/placeholder-nkp-delete-bootstrap-output.png
+:alt: 'nkp delete bootstrap terminal output confirming the bootstrap cluster was deleted and kind get clusters shows none'
+---
+_TODO: Replace with actual screenshot — Run `nkp delete bootstrap` and then `kind get clusters` and capture both commands and their output confirming "✓ Bootstrap cluster deleted" and "No kind clusters found."_
+::
+
 
 ```
 BEFORE PIVOT                        AFTER PIVOT

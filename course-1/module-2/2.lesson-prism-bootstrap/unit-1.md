@@ -38,6 +38,14 @@ name: 2-lesson-prism-bootstrap-unit-1
 
 ## Part A — Provision the jump host VM
 
+::image-box
+---
+:src: __static__/placeholder-prism-create-jump-vm.png
+:alt: 'Prism Central VM creation wizard showing nkp-jump VM configuration'
+---
+_TODO: Replace with actual screenshot — Prism Central "Create VM" dialog with Name: nkp-jump, 4 vCPUs, 8 GB RAM, disk cloned from the Rocky 9.7 image_
+::
+
 The jump host is a dedicated VM on AHV from which you run all NKP CLI commands. It never becomes a cluster node — it is the operator's workstation.
 
 ### A.1 Clone the Rocky Linux image
@@ -108,6 +116,14 @@ k9s version       # v0.32.5
 
 ## Part B — Set environment variables
 
+::image-box
+---
+:src: __static__/placeholder-tooling-versions.png
+:alt: 'Terminal output showing nkp, kubectl, helm, docker, and k9s version strings'
+---
+_TODO: Replace with actual screenshot — SSH session on jump host running nkp version, kubectl version --client, helm version, docker version, k9s version all returning correct versions_
+::
+
 NKP reads configuration from environment variables. The [nkp-quickstart `nkp-env`](https://github.com/nutanixdev/nkp-quickstart/blob/main/nkp-env) file is the canonical reference. Create it on the jump host:
 
 ```bash
@@ -151,6 +167,14 @@ source ~/nkp-env
 ---
 
 ## Part C — Create the Bootstrap Cluster
+
+::image-box
+---
+:src: __static__/placeholder-nkp-create-bootstrap-output.png
+:alt: 'Terminal showing nkp create bootstrap command output with INFO log lines and final success message'
+---
+_TODO: Replace with actual screenshot — Terminal running `nkp create bootstrap`, showing the INFO lines for creating, initialising, installing CAPI components, and the final "Bootstrap cluster created" confirmation_
+::
 
 With Docker running and the environment loaded, create the Bootstrap Cluster:
 
@@ -229,6 +253,14 @@ Fix any errors reported here before proceeding to `nkp create cluster`.
 ---
 
 ## Part D — (Optional) Deploy a local Harbor registry
+
+::image-box
+---
+:src: __static__/placeholder-k9s-bootstrap-capi-pods.png
+:alt: 'k9s showing CAPI and CAPC controller pods all in Running state inside the bootstrap cluster'
+---
+_TODO: Replace with actual screenshot — k9s open on the bootstrap kind cluster, :pods view filtered to capi-system and capc-system namespaces, all controller pods showing 1/1 Running_
+::
 
 Docker Hub rate-limits anonymous pulls to **100 per 6 hours**. During repeated `nkp create cluster` cycles this is exhausted in one deployment. A local Harbor instance caches images and eliminates the limit.
 

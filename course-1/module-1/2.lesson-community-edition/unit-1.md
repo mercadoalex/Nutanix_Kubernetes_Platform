@@ -97,6 +97,14 @@ Before booting from USB, configure each node's BIOS:
 
 ### Installation steps
 
+::image-box
+---
+:src: __static__/placeholder-ce-installer-boot-screen.png
+:alt: 'Nutanix CE Phoenix installer boot screen showing the install menu'
+---
+_TODO: Replace with actual screenshot — Server booted from the CE 2.1 USB, showing the Nutanix Phoenix installer boot menu or the initial install splash screen before the wizard begins_
+::
+
 1. Boot the node from the USB — the Nutanix CE installer (Phoenix) starts automatically
 2. Select the target disk for AHV (the hypervisor install drive — smallest SSD recommended)
 3. Assign IP addresses when prompted:
@@ -126,6 +134,14 @@ Use a `/24` subnet with a DHCP server that has a reserved range for NKP VIPs (ou
 
 ## Part B2 — Create the cluster in Prism Element
 
+::image-box
+---
+:src: __static__/placeholder-prism-element-cluster-wizard.png
+:alt: 'Prism Element cluster creation wizard showing CVM IP entry fields and cluster name'
+---
+_TODO: Replace with actual screenshot — Prism Element initial cluster creation wizard at https://<CVM-IP>:9440, showing the step where CVM IPs, Cluster Virtual IP, and Data Services IP are entered_
+::
+
 After all nodes are installed and CVMs are up:
 
 1. Open a browser to any **CVM IP** on port 9440: `https://10.0.2.21:9440`
@@ -141,6 +157,14 @@ After cluster creation, apply your default configurations (NTP, DNS, SMTP if des
 ---
 
 ## Part C — LCM Upgrade to AOS 7.3
+
+::image-box
+---
+:src: __static__/placeholder-lcm-upgrade-aos-versions.png
+:alt: 'Prism Element LCM upgrade screen showing available AOS versions with 7.3 selected'
+---
+_TODO: Replace with actual screenshot — Prism Element → Upgrade Software → LCM view, showing the current AOS version (6.8.1) and the available upgrade target (AOS 7.3.x) with the upgrade button visible_
+::
 
 CE 2.1 ships AOS **6.8.1**. NKP 2.17 requires AOS **7.3** minimum. You must upgrade via **Life Cycle Manager (LCM)** — the same tool used in commercial clusters.
 

@@ -40,6 +40,14 @@ vm5  172.16.0.14   worker-03
 
 ## Part 1 — cordon and drain
 
+::image-box
+---
+:src: __static__/placeholder-kubectl-drain-output.png
+:alt: 'kubectl drain vm4 terminal output showing pods being evicted one by one with ignore-daemonsets flag'
+---
+_TODO: Replace with actual screenshot — Run `kubectl drain vm4 --ignore-daemonsets --delete-emptydir-data` and capture the full terminal output showing each pod eviction line and the final "node/vm4 drained" confirmation_
+::
+
 ### 1.1 Deploy a test workload spread across workers
 
 ```bash
@@ -139,6 +147,15 @@ kubectl delete deployment drain-test
 ---
 
 ## Part 2 — Taints and tolerations
+
+::image-box
+---
+:src: __static__/placeholder-kubectl-get-nodes-cordoned.png
+:alt: 'kubectl get nodes showing vm4 in Ready,SchedulingDisabled state after cordon'
+---
+_TODO: Replace with actual screenshot — After `kubectl cordon vm4`, run `kubectl get nodes` and capture the output showing vm4 with the STATUS column reading "Ready,SchedulingDisabled" while vm3 and vm5 remain Ready_
+::
+
 
 **Taints** prevent pods from being scheduled onto a node unless the pod explicitly **tolerates** the taint. Used to:
 - Reserve nodes for specific workloads (GPU, high-memory)
@@ -249,6 +266,15 @@ kubectl delete deployment no-toleration with-toleration
 ---
 
 ## Part 3 — PodDisruptionBudget
+
+::image-box
+---
+:src: __static__/placeholder-kubectl-uncordon-output.png
+:alt: 'kubectl uncordon vm4 output followed by kubectl get nodes showing vm4 back to Ready status'
+---
+_TODO: Replace with actual screenshot — Run `kubectl uncordon vm4` then `kubectl get nodes` and capture both commands showing vm4 returning to plain Ready status with no SchedulingDisabled label_
+::
+
 
 A **PodDisruptionBudget (PDB)** limits how many pods of a deployment can be down simultaneously during voluntary disruptions (drain, rolling update). It prevents a drain from taking down more replicas than your application can tolerate.
 

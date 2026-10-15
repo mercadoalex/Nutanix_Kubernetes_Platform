@@ -27,6 +27,14 @@ Understanding how Flux `HelmRelease` and `HelmRepository` objects work is the fo
 
 ## How NKP add-ons work
 
+::image-box
+---
+:src: __static__/placeholder-kommander-addons-catalog-ui.png
+:alt: 'NKP Kommander add-ons catalog UI showing available platform services'
+---
+_TODO: Replace with actual screenshot — Kommander dashboard → Add-ons tab, showing the full catalog grid of available add-ons (cert-manager, Longhorn, monitoring stack, etc.) with their enabled/disabled state_
+::
+
 ```
 NKP Kommander
   └─► creates HelmRepository (where to find charts)
@@ -140,6 +148,14 @@ kubectl apply -f cert-manager-release.yaml
 ```
 
 ### 2.3 Watch Flux reconcile
+
+::image-box
+---
+:src: __static__/placeholder-flux-get-helmreleases-output.png
+:alt: 'flux get helmreleases -A terminal output showing all deployed add-ons and their reconciliation status'
+---
+_TODO: Replace with actual screenshot — terminal showing `flux get helmrelease -A` output with at least cert-manager and longhorn listed, READY=True, and their revision numbers_
+::
 
 ```bash
 flux get helmrelease -A
@@ -278,6 +294,16 @@ longhorn (default)   driver.longhorn.io   Delete          Immediate            �
 ```
 
 Longhorn sets itself as the default StorageClass.
+
+### 3.4 Verify the StorageClass
+
+::image-box
+---
+:src: __static__/placeholder-longhorn-ui-volumes.png
+:alt: 'Longhorn UI volumes page showing replicated PVCs across worker nodes'
+---
+_TODO: Replace with actual screenshot — Longhorn UI (port-forward to longhorn-frontend service) → Volumes page, showing the test PVC with 2 replicas across worker nodes, each in Healthy state_
+::
 
 ### 3.5 Test a Longhorn PVC
 
