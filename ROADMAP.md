@@ -15,6 +15,8 @@ etcd quorum math (why 3, why 5, never 4). Split-brain scenarios. Control plane V
 ### 3. NKP vs. the competition
 Positioning against OpenShift, Rancher RKE2, Tanzu, and EKS Anywhere. Technical comparison: CAPI vs. OCP Machine API, Flux vs. ArgoCD, Cilium vs. OVN-Kubernetes, hypervisor-agnosticism vs. vSphere lock-in. When NKP is *not* the right answer.
 
+![NKP vs. the competition](nkp-vs-competition-v1.png)
+
 ### 4. Disaster Recovery architecture
 What Velero backs up and what it doesn't. Backup targets: Nutanix Objects (S3-compatible), MinIO, AWS S3. etcd snapshots vs. Velero. Cross-cluster restore. NDK ProtectionPolicy vs. Velero. RTO/RPO design with Longhorn snapshots.
 
