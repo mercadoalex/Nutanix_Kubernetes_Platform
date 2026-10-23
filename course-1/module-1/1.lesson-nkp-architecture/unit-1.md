@@ -22,15 +22,28 @@ Nutanix wrapped these into **NKP**, announced at .NEXT in May 2024, adding tight
 :summary: "NKP 2.17, 2.18, and NKP Metal — staying current"
 ---
 
-| Release | Highlights |
-|---|---|
-| **NKP 2.17** *(this course)* | Ubuntu STIG-compliant node image out of the box; RKE2 1.34.x; MetalLB as the default on-prem load balancer |
+**NKP 2.17** *(this course)*
+- Ubuntu STIG-compliant node image out of the box
+- RKE2 1.34.x
+- MetalLB as the default on-prem load balancer
 
 <small>*STIG (Security Technical Implementation Guide) — hardening standards published by the US Defense Information Systems Agency (DISA). A STIG-compliant image has been pre-configured to meet those security benchmarks out of the box, without manual hardening.</small>
-| **NKP 2.18** | Clusters fully **FIPS 140-3 compliant**; **AI Navigator MCP Server** for natural-language root cause analysis; `NKPCluster` as a single source of truth for GitOps; automatic preflight checks before cluster updates; **Istio ambient mode** support; **Grafana Loki 3** with native OpenTelemetry |
+
+**NKP 2.18**
+- Clusters fully **FIPS 140-3 compliant**
+- **AI Navigator MCP Server** for natural-language root cause analysis
+- `NKPCluster` as a single source of truth for GitOps
+- Automatic preflight checks before cluster updates
+- **Istio ambient mode** support
+- **Grafana Loki 3** with native OpenTelemetry
 
 <small>*FIPS 140-3 (Federal Information Processing Standard) — US government cryptography standard that defines requirements for cryptographic modules. A FIPS 140-3 compliant cluster uses only approved algorithms and validated crypto libraries end-to-end, required for US federal and regulated-industry deployments.</small>
-| **NKP Metal** *(announced .NEXT April 2026)* | Extends NKP to **bare-metal nodes** with a dual-native architecture where containers and VMs are equally first-class; storage via CSI or Cloud Native AOS; same `nkp` CLI and Kommander management plane |
+
+**NKP Metal** *(announced .NEXT April 2026)*
+- Extends NKP to **bare-metal nodes** with a dual-native architecture
+- Containers and VMs are equally first-class workload primitives
+- Storage via CSI or Cloud Native AOS
+- Same `nkp` CLI and Kommander management plane
 
 <small>*Dual-native architecture — a design where both VMs and containers are first-class workload primitives on the same platform. Unlike traditional setups where VMs are the hypervisor layer and containers run inside them, dual-native treats both as equals: scheduled, managed, and observed through the same control plane without one being a wrapper for the other.</small>
 
