@@ -485,6 +485,14 @@ CAPX and CAREN both call the Prism Central API:
 
 This is why `nkp create cluster` requires `--endpoint https://<PC_IP>:9440` — that address is the Prism Central API endpoint.
 
+::image-box
+---
+:src: __static__/prisma_central_UI.png
+:alt: 'Prism Central dashboard — the multi-cluster management UI and REST API gateway that CAPX and CAREN call to provision NKP node VMs and validate infrastructure resources'
+---
+_Prism Central dashboard: the single pane of glass for Nutanix infrastructure and the API endpoint NKP's controllers call on port 9440._
+::
+
 ### NDK — Nutanix Data Services for Kubernetes
 
 **NDK** is a more recent layer that sits between AOS and Kubernetes. Where the CSI driver gives you basic PV provisioning, NDK gives Kubernetes workloads access to the full AOS feature set:
