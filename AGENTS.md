@@ -533,3 +533,29 @@ Jonas Högman's series documents creating Workload Clusters via the Kommander da
 | Jonas Högman — NKP series (5 posts) | [jonashogman.com](https://jonashogman.com/nkp-post-1-preparing-the-setup-environment/) | Full real-world deployment: Harbor, bootstrap, Kommander, IdP, Workload Cluster |
 | Jeroen Tielen — NX-3060-G4 lab | [jeroentielen.nl](https://www.jeroentielen.nl/trying-to-get-my-oldest-to-the-latest-and-running-the-latest-%F0%9F%AB%A3/) | CE on legacy hardware, full stack upgrade walkthrough |
 | Nutanix Support Portal | [portal.nutanix.com](https://portal.nutanix.com) | NKP downloads, compatibility matrix, POC licenses |
+
+## labctl — Deploy Commands
+
+### PATH (must export before using labctl)
+```bash
+export PATH=$PATH:/Users/alexmarket/.iximiuz/labctl/bin
+```
+
+### Push course content
+```bash
+labctl content push -f course nkp-nutanix-kubernetes-platform-475898d2 -d course-1
+```
+
+### List all courses
+```bash
+labctl content list --kind course
+```
+
+### Course IDs (iximious platform)
+| Course | ID |
+|---|---|
+| NKP — Nutanix Kubernetes Platform: From Zero to Production | `nkp-nutanix-kubernetes-platform-475898d2` |
+| GPU Engineering on Kubernetes | `gpu-engineering-on-kubernetes-7676e499` |
+| ColdFusion 2025: Foundations | `ColdFusion-2025-Foundations-5151cba6` |
+| ColdFusion 2025: Production & AI | `ColdFusion-2025-Production-and-AI-6124d4b3` |
+| Managing Kubernetes with Rancher | `Managing-Kubernetes-with-Rancher-479e4d7b` |
