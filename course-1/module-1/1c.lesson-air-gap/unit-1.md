@@ -78,7 +78,28 @@ This is a single `.tar` file you download once from the Nutanix support portal o
 
 ### Part 2 — Harbor as the local registry mirror
 
-**Harbor** is an open-source container registry (CNCF graduated project) that acts as a **local mirror** for all the external registries NKP needs. Instead of pulling from `docker.io` or `quay.io`, every cluster node pulls from Harbor.
+**Harbor** is an open-source container registry (Apache 2.0 license, CNCF Graduated project). It started as an internal VMware project in 2016 and was donated to the community. Think of it as your own private Docker Hub — installed inside your data center, fully under your control.
+
+::details-box
+---
+:summary: "Why Harbor is critical in an air-gapped environment"
+---
+
+In an air-gapped environment, cluster nodes cannot reach any external registry — no `docker.io`, no `quay.io`, no `gcr.io`, no `registry.k8s.io`. But Kubernetes needs images for everything:
+
+| Category | Examples |
+|---|---|
+| **Kubernetes system components** | `coredns`, `kube-proxy`, `pause`, `etcd` |
+| **NKP platform components** | Flux CD, cert-manager, Cilium, MetalLB, Traefik |
+| **NKP add-ons** | Prometheus, Grafana, Velero, Longhorn, GPU Operator |
+| **Customer workloads** | Any application image the dev teams deploy |
+
+Without a local registry, every one of these results in `ImagePullBackOff` — the node tries to reach the internet, fails, and the pod never starts. The cluster bootstraps but nothing runs.
+
+Harbor solves this by being the **single local source** for all images. You pre-load it once from the NKP bundle (on a connected machine or via secure media transfer), and from that point on every node pulls from Harbor — no internet required at runtime.
+::
+
+**Harbor** acts as a **local mirror** for all the external registries NKP needs. Instead of pulling from `docker.io` or `quay.io`, every cluster node pulls from Harbor.
 
 ```
 Air-gapped deployment with Harbor:
