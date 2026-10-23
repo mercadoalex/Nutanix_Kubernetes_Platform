@@ -230,34 +230,47 @@ Each layer has a specific job:
 ---
 ::
 
+### Diagram 1 — Dependency stack (read bottom to top)
+
+Each layer **cannot exist without the layer below it**. This is the "if X breaks, everything above X breaks" view.
+
 ```
 ┌─────────────────────────────────────────────────────┐
-│  Kommander          — fleet UI, workspaces, RBAC    │
+│  Kommander     — consumes the fleet of K8s clusters │  ← needs Flux CD running below it
 ├─────────────────────────────────────────────────────┤
-│  Flux CD            — GitOps, add-on reconciliation │
+│  Flux CD       — deploys add-ons into clusters      │  ← needs CAPI-managed clusters to exist
 ├─────────────────────────────────────────────────────┤
-│  Cluster API (CAPI) — declarative cluster lifecycle │
-│  CAPX               — CAPI provider for Nutanix AHV │
-│  CAREN              — runtime extensions (policies) │
+│  CAPI / CAPX / CAREN — create and manage clusters   │  ← needs RKE2 on nodes + PC API reachable
 ├─────────────────────────────────────────────────────┤
-│  RKE2               — Kubernetes distribution       │
+│  RKE2          — the Kubernetes engine on each node │  ← needs Rocky Linux userland + kernel
 ├─────────────────────────────────────────────────────┤
-│  Rocky Linux 9.7    — CIS-hardened node OS          │
+│  Rocky Linux 9.7  — CIS-hardened node OS            │  ← needs a VM to run on
 ├─────────────────────────────────────────────────────┤
-│  Nutanix NCI  ── AHV (hypervisor, hosts NKP VMs)   │
-│               ── AOS (storage OS, CVM)              │
-│  Nutanix Central ── Prism Central (CAPX/CAREN API)  │
+│  AHV           — hypervisor, hosts the node VMs     │  ← needs AOS for storage
+│  AOS / CVM     — distributed storage OS             │
+│  Prism Central — API gateway (CAPX/CAREN call here) │
 └─────────────────────────────────────────────────────┘
+                        ▲ foundation
 ```
 
-| Component | What it does |
-|---|---|
-| **RKE2** | CNCF-conformant Kubernetes distribution from Rancher. Replaces kubeadm. CIS-hardened by default. |
-| **Cluster API (CAPI)** | Kubernetes extension that models clusters as CRDs. Defines *what* a cluster should look like — number of control plane nodes, worker count, Kubernetes version. Provider-agnostic. |
-| **CAPX** | *Cluster API Provider for Nutanix* (also `cluster-api-provider-nutanix`). The AHV-specific CAPI infrastructure provider. Watches `NutanixCluster` and `NutanixMachine` CRDs and translates them into Prism Central API calls that provision real AHV VMs. Ships inside the `nkp create bootstrap` cluster. |
-| **CAREN** | *Cluster API Runtime Extensions for Nutanix*. A Nutanix-specific CAPI runtime extension server that intercepts cluster lifecycle hooks (BeforeClusterCreate, BeforeClusterUpgrade, etc.) to enforce Nutanix-specific policies — for example validating that the requested OS image exists in Prism Central before allowing cluster creation to proceed. |
-| **Flux CD** | GitOps operator. Reads HelmRelease objects and ensures add-ons are installed and up to date. |
-| **Kommander** | NKP's management UI. Workspaces, projects, centralized RBAC, add-on catalog. |
+> If Prism Central is unreachable, CAPI cannot create VMs → no nodes → no RKE2 → no clusters → Flux has nothing to deploy to → Kommander has nothing to manage. Every layer above the break goes dark.
+
+### Diagram 2 — Responsibility map (who does what)
+
+Each component has **one job**. This is the "who do I blame when X fails" view.
+
+| Component | Job | Talks to |
+|---|---|---|
+| **AHV** | Runs node VMs | — |
+| **AOS / CVM** | Provides distributed storage | AHV nodes |
+| **Prism Central** | Exposes REST API for infra automation | AHV + AOS |
+| **Rocky Linux 9.7** | Node OS — kernel, containerd, kubelet | AHV (runs as VM) |
+| **RKE2** | Kubernetes engine — apiserver, etcd, scheduler, kubelet | Rocky Linux |
+| **CAPI** | Declares desired cluster state as Kubernetes CRDs | — (framework only) |
+| **CAPX** | Translates CAPI `NutanixMachine` CRDs → Prism Central API calls → AHV VMs | Prism Central :9440 |
+| **CAREN** | Intercepts lifecycle hooks, validates prereqs before CAPX acts | Prism Central :9440 |
+| **Flux CD** | Reads `HelmRelease` objects, ensures add-ons are installed and reconciled | Kubernetes API |
+| **Kommander** | Fleet UI — workspaces, RBAC, add-on catalog across all clusters | Flux CD + Kubernetes API |
 
 
 ## Management cluster architecture
