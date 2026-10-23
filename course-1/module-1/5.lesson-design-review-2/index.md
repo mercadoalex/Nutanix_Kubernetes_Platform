@@ -17,6 +17,5 @@ tagz:
   - troubleshooting
   - capx
   - capi
-  - csi
   - design-review
 ---

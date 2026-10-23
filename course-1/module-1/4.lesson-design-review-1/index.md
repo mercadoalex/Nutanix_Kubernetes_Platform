@@ -19,5 +19,4 @@ tagz:
   - design-review
   - fips
   - air-gap
-  - multi-site
 ---
