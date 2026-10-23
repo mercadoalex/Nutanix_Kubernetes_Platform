@@ -313,6 +313,23 @@ When you open the Kommander dashboard, you are talking to an API server that was
 
 ## CAPI, CAPX, and CAREN — how they divide the work
 
+Before going deeper, one thing needs to be clear: **there is only one CAPI**.
+
+CAPI is a CNCF project — a generic framework that models cluster lifecycle as Kubernetes CRDs. It has no idea what AHV, AWS, or vSphere even looks like. It delegates all infrastructure-specific work to a **provider plugin**. One provider per infrastructure target:
+
+```
+CAPI  (CNCF framework — one, unchanged)
+  ├── CAPX  →  Nutanix AHV        ← what Nutanix built
+  ├── CAPV  →  VMware vSphere
+  ├── CAPA  →  AWS
+  ├── CAPZ  →  Azure
+  └── CAPG  →  GCP
+```
+
+Nutanix did not fork CAPI or replace it. They wrote **CAPX** — a provider plugin — because no AHV provider existed. CAPX is open source on GitHub (`nutanix-cloud-native/cluster-api-provider-nutanix`). Konvoy (NKP's cluster engine) uses CAPI + CAPX as its provisioning engine, the same way any other CAPI-based distribution would use CAPI + their respective provider.
+
+So when you see "CAPI, CAPX, CAREN" together, read it as: *the framework + the Nutanix plugin + the Nutanix lifecycle guard*. Three components, one coherent system.
+
 These three components are often confused because they all live inside the same cluster and cooperate tightly. Here is how to tell them apart:
 
 ::image-box
