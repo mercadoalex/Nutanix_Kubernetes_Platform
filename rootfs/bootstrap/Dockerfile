@@ -46,6 +46,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         systemd \
         systemd-sysv \
         sudo \
+        kmod \
         ca-certificates \
         curl \
         gnupg \
@@ -84,19 +85,23 @@ RUN install -m 0755 -d /etc/apt/keyrings \
         docker-compose-plugin \
     && rm -rf /var/lib/apt/lists/*
 
-# ── Docker daemon config for Firecracker microVM kernels ─────────────────────
-# Firecracker kernels are minimal — two iptables limitations apply:
-#   1. nf_tables module missing  → use iptables-legacy backend
-#   2. 'raw' table missing       → Docker's DIRECT ACCESS FILTERING and
-#      LOOPBACK FILTERING rules both insert into the raw table and fail with
-#      "Table does not exist". Setting "allow-direct-routing": true tells
-#      Docker to skip both raw-table rules entirely. Confirmed working on
-#      Firecracker via iximious platform testing.
+# ── Docker daemon config + kernel modules for Firecracker microVM kernels ─────
+# The iximious Firecracker kernel (6.1.x) compiles many netfilter modules as =m.
+# They must be loaded before Docker and kind start, otherwise:
+#   - Docker fails: nf_tables missing → use iptables-legacy
+#   - Docker fails: raw table missing → allow-direct-routing:true skips it
+#   - kube-proxy fails: xt_comment, xt_mark missing → KUBE-* chains not created
+#   - kube-proxy fails: xt_conntrack, xt_addrtype missing → iptables-restore fails
+# Solution: load all required modules via /etc/modules-load.d/ (handled by
+# systemd-modules-load.service which runs early in boot, before docker.service).
+# Also set kube-proxy to ipvs mode via /etc/modules-load.d/ (ip_vs_*).
 RUN update-alternatives --set iptables  /usr/sbin/iptables-legacy \
     && update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy \
     && mkdir -p /etc/docker \
     && printf '{\n  "allow-direct-routing": true,\n  "userland-proxy": true,\n  "exec-opts": ["native.cgroupdriver=systemd"]\n}\n' \
-       > /etc/docker/daemon.json
+       > /etc/docker/daemon.json \
+    && printf 'ip_tables\niptable_nat\niptable_filter\niptable_mangle\niptable_raw\nxt_comment\nxt_mark\nxt_conntrack\nxt_addrtype\nnf_conntrack\nip_vs\nip_vs_rr\nip_vs_wrr\nip_vs_sh\n' \
+       > /etc/modules-load.d/kind-firecracker.conf
 
 # ── kubectl (from downloads stage) ───────────────────────────────────────────
 COPY --from=downloads /kubectl /usr/local/bin/kubectl
