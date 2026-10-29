@@ -126,10 +126,9 @@ You should see the CAPI core controllers, CAPX (Cluster API Provider for Nutanix
 
 ::image-box
 ---
-:src: __static__/placeholder-capi-pods-running-capi-system.png
+:src: __static__/kubectl-get-pods-v1.png
 :alt: 'kubectl get pods -n capi-system showing CAPI core controllers and Nutanix provider pods all Running'
 ---
-_TODO: Replace with actual screenshot — Run `kubectl get pods -n capi-system` and `kubectl get pods -n capx-system` on vm1 and capture the output showing all controller pods in Running state_
 ::
 
 
