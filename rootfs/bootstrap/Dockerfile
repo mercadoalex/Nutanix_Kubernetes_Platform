@@ -84,6 +84,14 @@ RUN install -m 0755 -d /etc/apt/keyrings \
         docker-compose-plugin \
     && rm -rf /var/lib/apt/lists/*
 
+# ── Switch Docker to legacy iptables backend ──────────────────────────────────
+# Firecracker microVM kernels do not ship the nf_tables module that iptables-nft
+# requires. Docker 29 defaults to nf_tables and fails to start with:
+#   "CHAIN_ADD failed: chain PREROUTING — missing kernel module?"
+# Force the legacy xtables backend so dockerd starts cleanly on Firecracker.
+RUN update-alternatives --set iptables  /usr/sbin/iptables-legacy \
+    && update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy
+
 # ── kubectl (from downloads stage) ───────────────────────────────────────────
 COPY --from=downloads /kubectl /usr/local/bin/kubectl
 RUN chmod +x /usr/local/bin/kubectl
