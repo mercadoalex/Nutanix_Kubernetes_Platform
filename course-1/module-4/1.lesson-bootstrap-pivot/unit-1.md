@@ -56,10 +56,9 @@ All five VMs share the `172.16.0.0/24` network. The RKE2 registration port is **
 
 ::image-box
 ---
-:src: __static__/placeholder-kind-bootstrap-cluster-docker-ps.png
+:src: __static__/nkp-create-bootstrap-v1.png
 :alt: 'docker ps output on vm1 showing the kind bootstrap cluster container running'
 ---
-_TODO: Replace with actual screenshot — After `nkp create bootstrap` completes, run `docker ps` on vm1 and capture the output showing the kind container (nkp-bootstrap-control-plane) in Up status_
 ::
 
 Open a terminal on **vm1**.

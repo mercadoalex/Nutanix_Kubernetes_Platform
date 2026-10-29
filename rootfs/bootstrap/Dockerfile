@@ -119,7 +119,12 @@ RUN echo 'source <(kubectl completion bash)' >> /etc/bash.bashrc \
 # so the iximiuz platform finds the expected user in /etc/passwd.
 RUN usermod -l laborant -d /home/laborant -m ubuntu \
     && groupmod -n laborant ubuntu \
-    && echo 'laborant ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+    && echo 'laborant ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers \
+    && usermod -aG docker laborant
+
+# ── enable Docker and SSH at boot ─────────────────────────────────────────────
+RUN systemctl enable docker \
+    && systemctl enable ssh
 
 # ── sanitize filesystem for iximiuz ext4 bake ────────────────────────────────
 # Ubuntu-specific rules (different from Rocky):
