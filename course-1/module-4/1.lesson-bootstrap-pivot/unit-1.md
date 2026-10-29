@@ -73,6 +73,13 @@ kind version
 
 Expected output includes `v2.17.1`, `v1.34.3`, and `v0.27.0` respectively. If any command is missing, the rootfs image was not loaded correctly — re-launch the playground.
 
+::image-box
+---
+:src: __static__/nkp-version-v1.png
+:alt: 'Terminal output showing nkp version v2.17.1, kubectl version v1.34.3, and kind version v0.27.0'
+---
+::
+
 ### 1.2 Create the Bootstrap Cluster
 
 ```bash
