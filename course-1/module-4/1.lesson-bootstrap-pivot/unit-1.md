@@ -91,6 +91,13 @@ nkp create bootstrap
 > 📺 In production this cluster talks to Prism Central to provision real AHV VMs.  
 > In this lab we skip that step — vm2–vm5 already exist with RKE2 pre-installed.
 
+::image-box
+---
+:src: __static__/pulling-bootstrap-image-v1.png
+:alt: 'Terminal output showing nkp create bootstrap pulling the kind bootstrap cluster image'
+---
+::
+
 Watch the output. You will see:
 
 ```
