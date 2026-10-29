@@ -84,13 +84,19 @@ RUN install -m 0755 -d /etc/apt/keyrings \
         docker-compose-plugin \
     && rm -rf /var/lib/apt/lists/*
 
-# ── Switch Docker to legacy iptables backend ──────────────────────────────────
-# Firecracker microVM kernels do not ship the nf_tables module that iptables-nft
-# requires. Docker 29 defaults to nf_tables and fails to start with:
-#   "CHAIN_ADD failed: chain PREROUTING — missing kernel module?"
-# Force the legacy xtables backend so dockerd starts cleanly on Firecracker.
+# ── Docker daemon config for Firecracker microVM kernels ─────────────────────
+# Firecracker kernels are minimal — two iptables limitations apply:
+#   1. nf_tables module missing  → use iptables-legacy backend
+#   2. 'raw' table missing       → Docker's DIRECT ACCESS FILTERING and
+#      LOOPBACK FILTERING rules both insert into the raw table and fail with
+#      "Table does not exist". Setting "allow-direct-routing": true tells
+#      Docker to skip both raw-table rules entirely. Confirmed working on
+#      Firecracker via iximious platform testing.
 RUN update-alternatives --set iptables  /usr/sbin/iptables-legacy \
-    && update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy
+    && update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy \
+    && mkdir -p /etc/docker \
+    && printf '{\n  "allow-direct-routing": true,\n  "userland-proxy": true,\n  "exec-opts": ["native.cgroupdriver=systemd"]\n}\n' \
+       > /etc/docker/daemon.json
 
 # ── kubectl (from downloads stage) ───────────────────────────────────────────
 COPY --from=downloads /kubectl /usr/local/bin/kubectl

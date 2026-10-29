@@ -271,10 +271,9 @@ All four nodes `Ready`. The Management Cluster is operational.
 
 ::image-box
 ---
-:src: __static__/placeholder-kubectl-get-nodes-all-four-ready.png
+:src: __static__/the-pivot-v1.png
 :alt: 'kubectl get nodes showing all four cluster nodes (vm2 control-plane, vm3-vm5 workers) in Ready status after pivot'
 ---
-_TODO: Replace with actual screenshot — After copying and fixing the kubeconfig, run `kubectl get nodes` from vm1 pointing at the Management Cluster and capture the output showing vm2 (control-plane,etcd,master) and vm3–vm5 (workers) all Ready_
 ::
 
 
@@ -399,13 +398,6 @@ kubectl delete pod nginx
 
 ## What just happened — the pivot explained
 
-::image-box
----
-:src: __static__/placeholder-nkp-delete-bootstrap-output.png
-:alt: 'nkp delete bootstrap terminal output confirming the bootstrap cluster was deleted and kind get clusters shows none'
----
-_TODO: Replace with actual screenshot — Run `nkp delete bootstrap` and then `kind get clusters` and capture both commands and their output confirming "✓ Bootstrap cluster deleted" and "No kind clusters found."_
-::
 
 
 ```
