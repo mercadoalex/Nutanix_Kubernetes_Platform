@@ -32,6 +32,7 @@ RUN dnf install -y epel-release || true
 RUN dnf install -y --setopt=install_weak_deps=False --allowerasing \
         systemd \
         openssh-server \
+        sudo \
         curl git tmux jq bash-completion \
         vim-minimal less iproute iputils \
         bind-utils nmap-ncat socat \
@@ -106,9 +107,10 @@ RUN echo 'export KUBECONFIG=/etc/rancher/rke2/rke2.yaml' >> /etc/bashrc \
     && echo 'source <(kubectl completion bash)' >> /etc/bashrc \
     && echo 'alias k=kubectl' >> /etc/bashrc
 
-# ── laborant user (required by iximiuz platform) ─────────────────────────────
+# ── laborant user + root password (required by iximiuz platform) ─────────────
 RUN useradd -m -u 1000 -s /bin/bash laborant \
-    && echo 'laborant ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+    && echo 'laborant ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers \
+    && echo 'root:root' | chpasswd
 
 # ── lab files ─────────────────────────────────────────────────────────────────
 RUN mkdir -p /home/laborant/labs
