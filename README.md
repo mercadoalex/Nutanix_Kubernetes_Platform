@@ -2,6 +2,8 @@
 
 ![NKP Training Course](NKP_Training_course.jpeg)
 
+![Bootstrap Cluster — nkp create bootstrap terminal output](bootstrap.png)
+
 > **Learn and teach NKP** — a hands-on, multi-VM lab course built on the
 > [iximious Labs](https://labs.iximious.com) Flexbox platform.
 
