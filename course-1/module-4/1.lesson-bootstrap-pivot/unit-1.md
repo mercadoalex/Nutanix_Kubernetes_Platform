@@ -358,9 +358,96 @@ The scaffolding is down. The Management Cluster stands on its own.
 
 ---
 
-## Part 5 — Explore your cluster
+## Part 5 — Install NKP (Kommander) on the Management Cluster
 
-### 5.1 Check cluster info
+> **vm1** — operator workstation
+
+At this point you have a clean 4-node RKE2 cluster. It is Kubernetes — but not yet NKP.
+NKP is the management layer on top: **Kommander** (multi-cluster dashboard + GitOps engine),
+**Flux CD** (add-on lifecycle), **CAPI controllers**, and the **cert-manager** + **traefik** stack.
+
+`nkp install kommander` installs all of this into your existing cluster. No Bootstrap Cluster needed.
+
+> 📺 **Demo note** — The Bootstrap Cluster step (Part 1) was shown as a walkthrough because
+> the lab micro-VMs do not have enough RAM to run `nkp create bootstrap` (kind + 15 CAPI controllers
+> require 8 GB minimum). The `nkp install kommander` step below runs directly against vm2 and
+> works fine within the lab constraints.
+
+### 5.1 Verify prerequisites
+
+```bash
+# On vm1 — confirm you are pointing at the Management Cluster
+export KUBECONFIG=~/.kube/mgmt.kubeconfig
+kubectl get nodes
+```
+
+All four nodes must be `Ready` before proceeding.
+
+```bash
+# Confirm nkp CLI version
+nkp version
+```
+
+### 5.2 Install Kommander
+
+```bash
+nkp install kommander \
+  --kubeconfig ~/.kube/mgmt.kubeconfig
+```
+
+This command:
+1. Installs **cert-manager** (TLS certificate management)
+2. Installs **Flux CD** (GitOps engine — manages all NKP add-ons via HelmReleases)
+3. Installs **Traefik** (Layer 7 ingress controller)
+4. Installs **Kommander** (multi-cluster management dashboard)
+5. Installs **CAPI core controllers + CAPX** (Cluster API for Nutanix)
+
+**This takes 10–15 minutes.** Watch progress in a second terminal:
+
+```bash
+watch -n5 'kubectl get pods -A | grep -v Running | grep -v Completed'
+```
+
+Wait until no pods remain in `Pending`, `Init`, or `ContainerCreating` state.
+
+### 5.3 Verify the installation
+
+```bash
+kubectl get pods -n kommander
+kubectl get pods -n flux-system
+kubectl get pods -n cert-manager
+kubectl get pods -n capi-system
+kubectl get pods -n capx-system
+```
+
+All pods should be `Running` or `Completed`.
+
+### 5.4 Get the Kommander dashboard URL
+
+```bash
+kubectl get svc -n kommander kommander-traefik \
+  -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
+```
+
+> ℹ️ In the lab MetalLB provides the LoadBalancer IP (pool: `172.16.0.100–172.16.0.120`).
+> Open `https://<IP>/dkp/kommander/dashboard` in your browser.
+
+### 5.5 Get the initial admin credentials
+
+```bash
+kubectl get secret dkp-credentials \
+  -n kommander \
+  -o jsonpath='{.data.password}' | base64 -d
+echo
+```
+
+Login: `admin` / `<password from above>`
+
+---
+
+## Part 6 — Explore your cluster
+
+### 6.1 Check cluster info
 
 ```bash
 kubectl cluster-info
@@ -371,7 +458,7 @@ Kubernetes control plane is running at https://172.16.0.11:6443
 CoreDNS is running at https://172.16.0.11:6443/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
 ```
 
-### 5.2 Inspect the nodes with k9s (optional)
+### 6.2 Inspect the nodes with k9s (optional)
 
 ```bash
 k9s --kubeconfig ~/.kube/mgmt.kubeconfig
@@ -379,7 +466,7 @@ k9s --kubeconfig ~/.kube/mgmt.kubeconfig
 
 Press `0` to see all namespaces. Press `:nodes` to jump to the node view. Use `d` to describe a node. Press `q` to quit.
 
-### 5.3 Run a test workload
+### 6.3 Run a test workload
 
 Confirm the cluster can schedule and run pods:
 
@@ -459,13 +546,14 @@ Alternatively, copy the kubeconfig content manually: `cat /etc/rancher/rke2/rke2
 
 | Step | Command | Where |
 |---|---|---|
-| Create bootstrap | `nkp create bootstrap` | vm1 |
+| Create bootstrap | `nkp create bootstrap` | vm1 📺 |
 | Start control plane | `systemctl enable --now rke2-server` | vm2 |
 | Get join token | `cat /var/lib/rancher/rke2/server/node-token` | vm2 |
 | Join workers | `systemctl enable --now rke2-agent` | vm3–5 |
 | Copy kubeconfig | `scp root@172.16.0.11:/etc/rancher/rke2/rke2.yaml ~/.kube/mgmt.kubeconfig` | vm1 |
 | Fix server address | `sed -i 's/127.0.0.1/172.16.0.11/' ~/.kube/mgmt.kubeconfig` | vm1 |
-| Delete bootstrap | `nkp delete bootstrap` | vm1 |
+| Delete bootstrap | `nkp delete bootstrap` | vm1 📺 |
+| **Install Kommander** | `nkp install kommander --kubeconfig ~/.kube/mgmt.kubeconfig` | vm1 |
 
 ---
 
