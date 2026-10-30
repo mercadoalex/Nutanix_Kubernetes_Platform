@@ -93,7 +93,11 @@ RUN echo 'export PATH=$PATH:/var/lib/rancher/rke2/bin' >> /etc/bashrc \
 # ── laborant user + root password (required by iximiuz platform) ─────────────
 RUN useradd -m -u 1000 -s /bin/bash laborant \
     && echo 'laborant ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers \
-    && echo 'root:root' | chpasswd
+    && echo 'root:root' | chpasswd \
+    && find /usr -xdev -type f -links +1 2>/dev/null | while IFS= read -r f; do \
+        [ -n "$f" ] && [ -f "$f" ] || continue; \
+        cp -a "$f" /tmp/_hl_break 2>/dev/null && mv -f /tmp/_hl_break "$f" 2>/dev/null || true; \
+       done
 
 # ── lab files ─────────────────────────────────────────────────────────────────
 RUN mkdir -p /home/laborant/labs
