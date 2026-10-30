@@ -168,8 +168,10 @@ RUN sed -i 's/^#\?PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config \
     && sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config
 
 # ── lab files ─────────────────────────────────────────────────────────────────
-RUN mkdir -p /home/laborant/labs /root/.kube
+RUN mkdir -p /root/.kube
 COPY --chown=1000:1000 rootfs/bootstrap/labs/ /home/laborant/labs/
+RUN chown laborant:laborant /home/laborant/labs \
+    && chmod +x /home/laborant/labs/nkp-bootstrap-fix.sh
 
 WORKDIR /home/laborant
 
