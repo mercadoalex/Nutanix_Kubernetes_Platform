@@ -43,7 +43,7 @@ machines:
           address: 172.16.0.10/24
     resources:
       cpuCount: 4
-      ramSize: 4GiB
+      ramSize: 8GiB
 
   # ── vm2: Management Cluster control plane ─────────────────────────────────
   - name: controlplane
