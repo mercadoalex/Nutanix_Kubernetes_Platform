@@ -19,6 +19,6 @@ tagz:
   - mig
   - time-slicing
 playground:
-  name: nkp-lab-b2fa17d3
+  name: nkp-lab
 ---
 

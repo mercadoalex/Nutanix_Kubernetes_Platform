@@ -96,3 +96,5 @@ downloads/bootstrap/nkp_v*.tar.gz
 downloads/bootstrap/helm-v*.tar.gz
 downloads/bootstrap/flux_*.tar.gz
 downloads/bootstrap/k9s_*.tar.gz
+downloads/bootstrap/konvoy-bootstrap-*.tar
+downloads/bootstrap/konvoy-bootstrap-*.tar

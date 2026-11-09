@@ -17,7 +17,7 @@ tagz:
   - kubeconfig
   - contexts
 playground:
-  name: nkp-lab-b2fa17d3
+  name: nkp-lab-single
 tasks:
   verify_kubectl_context:
     machine: bootstrap

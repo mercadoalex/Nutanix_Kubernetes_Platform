@@ -18,5 +18,5 @@ tagz:
   - kommander
   - nkp-move
 playground:
-  name: nkp-lab-b2fa17d3
+  name: nkp-lab-2vm
 ---

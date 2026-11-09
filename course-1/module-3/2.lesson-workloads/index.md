@@ -17,7 +17,7 @@ tagz:
   - pvc
   - storage
 playground:
-  name: nkp-lab-b2fa17d3
+  name: nkp-lab-single
 tasks:
   verify_deployment_running:
     machine: bootstrap

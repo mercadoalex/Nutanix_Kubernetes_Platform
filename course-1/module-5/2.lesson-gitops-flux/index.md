@@ -18,7 +18,7 @@ tagz:
   - kustomization
   - drift-detection
 playground:
-  name: nkp-lab-b2fa17d3
+  name: nkp-lab
 tasks:
   verify_gitrepo_ready:
     machine: bootstrap

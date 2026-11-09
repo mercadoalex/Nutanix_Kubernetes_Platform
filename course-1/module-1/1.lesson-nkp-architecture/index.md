@@ -19,7 +19,7 @@ tagz:
   - rke2
   - kommander
 playground:
-  name: nkp-lab-b2fa17d3
+  name: nkp-lab-single
 tasks:
   verify_tools_ready:
     init: false

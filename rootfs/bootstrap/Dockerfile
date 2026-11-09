@@ -21,11 +21,12 @@ ARG UBUNTU_VERSION=24.04
 
 # ── downloads stage — pre-fetched binaries copied in (no curl inside build) ──
 FROM scratch AS downloads
-COPY downloads/bootstrap/kubectl                           /kubectl
-COPY downloads/bootstrap/kind                              /kind
-COPY downloads/bootstrap/nkp_v2.17.1_linux_amd64.tar.gz   /nkp.tar.gz
-COPY downloads/bootstrap/helm-v3.17.3-linux-amd64.tar.gz  /helm.tar.gz
-COPY downloads/bootstrap/flux_2.5.1_linux_amd64.tar.gz    /flux.tar.gz
+COPY downloads/bootstrap/kubectl                                    /kubectl
+COPY downloads/bootstrap/kind                                       /kind
+COPY downloads/bootstrap/nkp_v2.17.1_linux_amd64.tar.gz            /nkp.tar.gz
+COPY downloads/bootstrap/helm-v3.17.3-linux-amd64.tar.gz           /helm.tar.gz
+COPY downloads/bootstrap/flux_2.5.1_linux_amd64.tar.gz             /flux.tar.gz
+COPY downloads/bootstrap/k9s_Linux_amd64.tar.gz                    /k9s.tar.gz
 
 # ── main image ────────────────────────────────────────────────────────────────
 FROM ubuntu:${UBUNTU_VERSION}
@@ -127,6 +128,22 @@ COPY --from=downloads /nkp.tar.gz /tmp/nkp.tar.gz
 RUN tar xz -C /usr/local/bin/ nkp < /tmp/nkp.tar.gz \
     && chmod +x /usr/local/bin/nkp \
     && rm /tmp/nkp.tar.gz
+
+# ── k9s (from downloads stage) ───────────────────────────────────────────────
+COPY --from=downloads /k9s.tar.gz /tmp/k9s.tar.gz
+RUN tar xz -C /usr/local/bin k9s < /tmp/k9s.tar.gz \
+    && chmod +x /usr/local/bin/k9s \
+    && rm /tmp/k9s.tar.gz
+
+# ── konvoy-bootstrap image pull at first boot (via systemd oneshot) ──────────
+# Cannot 'docker pull' here — Docker daemon is not running during image build.
+# Embedding the tar exceeds the 2000 MB iximious bake limit.
+# Solution: pull from GHCR at first boot (ghcr.io has no rate limits unlike Docker Hub).
+# The image is re-tagged locally so 'nkp create bootstrap' finds it as the default name.
+# This pull happens once per session while the student reads the intro — ~30s on a fast link.
+RUN printf '[Unit]\nDescription=Pre-pull konvoy-bootstrap image from GHCR\nAfter=docker.service\nRequires=docker.service\n\n[Service]\nType=oneshot\nRemainAfterExit=yes\nExecStart=/usr/bin/docker pull ghcr.io/mercadoalex/konvoy-bootstrap:v2.17.1\nExecStartPost=/usr/bin/docker tag ghcr.io/mercadoalex/konvoy-bootstrap:v2.17.1 docker.io/mesosphere/konvoy-bootstrap:v2.17.1\n\n[Install]\nWantedBy=multi-user.target\n' \
+        > /etc/systemd/system/nkp-preload-images.service \
+    && systemctl enable nkp-preload-images.service
 
 # ── shell setup ───────────────────────────────────────────────────────────────
 RUN echo 'source <(kubectl completion bash)' >> /etc/bash.bashrc \

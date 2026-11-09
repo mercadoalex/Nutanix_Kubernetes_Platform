@@ -1,13 +1,9 @@
 kind: playground
 name: nkp-lab
 base: flexbox
-title: "NKP — Nutanix Kubernetes Platform Lab"
+title: "NKP — Nutanix Kubernetes Platform Lab (Full 5-VM)"
 description: |-
-    Full 5-VM NKP lab environment.
-    vm1 (bootstrap): operator workstation — nkp CLI, kubectl, helm, flux, kind bootstrap cluster.
-    vm2 (controlplane): RKE2 server — kube-apiserver, etcd, controller-manager.
-    vm3–vm5 (workers): RKE2 agents — kubelet, kube-proxy.
-    Network: 172.16.0.0/24 · MetalLB pool: 172.16.0.100–172.16.0.120
+    Full 5-VM NKP lab. vm1 (bootstrap): nkp CLI, kubectl, helm, flux, kind. vm2 (controlplane): RKE2 server. vm3-vm5 (workers): RKE2 agents. Network: 172.16.0.0/24. MetalLB: 172.16.0.100-172.16.0.120.
 categories:
     - kubernetes
 
@@ -26,15 +22,15 @@ playground:
                 default: true
           drives:
               - mount: /
-                source: oci://ghcr.io/mercadoalex/nkp-bootstrap:latest
+                source: oci://ghcr.io/mercadoalex/nkp-bootstrap:v2.17.1-r2
                 size: 20Gi
           network:
               interfaces:
                   - network: local
                     address: 172.16.0.10/24
           resources:
-              cpuCount: 2
-              ramSize: 2Gi
+              cpuCount: 2   # total cap: 2+2+2+2+2 = 10 vCPU
+              ramSize: 4Gi  # total cap: 4+4+2+2+2 = 14 Gi (within 16 GiB limit)
 
         # ── vm2: Management Cluster control plane ───────────────────────────────
         - name: controlplane
@@ -51,8 +47,8 @@ playground:
                   - network: local
                     address: 172.16.0.11/24
           resources:
-              cpuCount: 2
-              ramSize: 4Gi
+              cpuCount: 2   # total cap: 2+2+2+2+2 = 10 vCPU
+              ramSize: 4Gi  # total cap: 4+4+2+2+2 = 14 Gi (within 16 GiB limit)
 
         # ── vm3: Worker node 1 ──────────────────────────────────────────────────
         - name: worker-01

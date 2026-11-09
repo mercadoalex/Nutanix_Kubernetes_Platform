@@ -34,6 +34,7 @@ RUN dnf install -y --setopt=install_weak_deps=False --allowerasing \
         openssh-server \
         sudo \
         curl git tmux jq bash-completion \
+        procps-ng \
         vim-minimal less iproute iputils \
         bind-utils nmap-ncat socat \
         iptables nftables \

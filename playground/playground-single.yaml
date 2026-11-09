@@ -1,0 +1,57 @@
+kind: playground
+name: nkp-lab-single
+base: flexbox
+title: "NKP — Single-VM Lab (Tier 1 / Tier 2)"
+description: |-
+    Single-VM NKP lab — used for Tier 1 and early Tier 2 lessons that only need the
+    operator workstation (architecture, CE walkthrough, OS image, nkp CLI, kubectl basics,
+    workloads). No RKE2 cluster — vm1 has a pre-loaded kubeconfig pointing at a single-node
+    RKE2 server running locally on the same machine.
+    vm1 (bootstrap): nkp CLI, kubectl, helm, flux, k9s, Ansible.
+    Resources: 4vCPU / 4Gi — sufficient for single-node kubectl + nkp CLI exercises.
+categories:
+    - kubernetes
+
+playground:
+    networks:
+        - name: local
+          subnet: 172.16.0.0/24
+
+    machines:
+
+        # ── vm1: Bootstrap / operator workstation ──────────────────────────────
+        - name: bootstrap
+          users:
+              - name: root
+              - name: laborant
+                default: true
+          drives:
+              - mount: /
+                source: oci://ghcr.io/mercadoalex/nkp-bootstrap:latest
+                size: 20Gi
+          network:
+              interfaces:
+                  - network: local
+                    address: 172.16.0.10/24
+          resources:
+              cpuCount: 4
+              ramSize: 4Gi
+
+    tabs:
+        - id: terminal-bootstrap
+          kind: terminal
+          name: bootstrap
+          machine: bootstrap
+
+        - id: ide-bootstrap
+          kind: ide
+          name: IDE
+          machine: bootstrap
+
+    accessControl:
+        canList:
+            - owner
+        canRead:
+            - anyone
+        canStart:
+            - anyone

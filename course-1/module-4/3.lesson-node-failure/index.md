@@ -17,7 +17,7 @@ tagz:
   - resilience
   - rke2
 playground:
-  name: nkp-lab-b2fa17d3
+  name: nkp-lab
 tasks:
   verify_vm4_notready:
     machine: bootstrap

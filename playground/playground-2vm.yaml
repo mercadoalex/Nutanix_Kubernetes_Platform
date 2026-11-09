@@ -1,0 +1,83 @@
+kind: playground
+name: nkp-lab-2vm
+base: flexbox
+title: "NKP — 2-VM Lab (Tier 2)"
+description: |-
+    Two-VM NKP lab — used for Tier 2 lessons that need a real RKE2 control plane but
+    not the full 5-node cluster (RKE2 bootstrap, Prism walkthrough, cluster-create demo,
+    nkp CLI against a live cluster).
+    vm1 (bootstrap): nkp CLI, kubectl, helm, flux, k9s — 4vCPU / 4Gi.
+    vm2 (controlplane): RKE2 server, kube-apiserver, etcd — 4vCPU / 8Gi.
+    Network: 172.16.0.0/24
+categories:
+    - kubernetes
+
+playground:
+    networks:
+        - name: local
+          subnet: 172.16.0.0/24
+
+    machines:
+
+        # ── vm1: Bootstrap / operator workstation ──────────────────────────────
+        - name: bootstrap
+          users:
+              - name: root
+              - name: laborant
+                default: true
+          drives:
+              - mount: /
+                source: oci://ghcr.io/mercadoalex/nkp-bootstrap:latest
+                size: 20Gi
+          network:
+              interfaces:
+                  - network: local
+                    address: 172.16.0.10/24
+          resources:
+              cpuCount: 4
+              ramSize: 4Gi
+
+        # ── vm2: Management Cluster control plane ───────────────────────────────
+        # 8Gi required: RKE2 server (kube-apiserver + etcd + controller-manager)
+        # takes ~1.8Gi at rest; add-ons push it to ~3Gi. 4Gi leaves headroom for
+        # the full NKP control-plane add-on set (cert-manager, Cilium, CoreDNS).
+        - name: controlplane
+          users:
+              - name: root
+              - name: laborant
+                default: true
+          drives:
+              - mount: /
+                source: oci://ghcr.io/mercadoalex/nkp-controlplane:latest
+                size: 20Gi
+          network:
+              interfaces:
+                  - network: local
+                    address: 172.16.0.11/24
+          resources:
+              cpuCount: 4
+              ramSize: 8Gi
+
+    tabs:
+        - id: terminal-bootstrap
+          kind: terminal
+          name: bootstrap
+          machine: bootstrap
+
+        - id: ide-bootstrap
+          kind: ide
+          name: IDE
+          machine: bootstrap
+
+        - id: terminal-controlplane
+          kind: terminal
+          name: controlplane
+          machine: controlplane
+
+    accessControl:
+        canList:
+            - owner
+        canRead:
+            - anyone
+        canStart:
+            - anyone

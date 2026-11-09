@@ -176,10 +176,10 @@ Each VM boots its own purpose-built rootfs. The cluster is **not** pre-started �
 
 ## rootfs Build Rules — iximious ext4 Bake Compatibility
 
-> ⚠️ **Status: check-bake.sh passes locally; live playground boot not yet confirmed.**
-> All three images pass the preflight script (0 hardlinks, 0 dangling symlinks, sshd ✓).
-> The RootfsBaked result on the actual iximious platform is still unverified — update this
-> section once a playground boot confirms `RootfsBaked: True` on all 5 VMs.
+> ✅ **Status: all 5 VMs boot and run confirmed on the live iximious platform.**
+> check-bake.sh passes locally. All 5 VMs confirmed RUNNING in playground session.
+> `nkp create bootstrap` completes successfully (all 26 CAPI pods Running, 1.7 GiB headroom on vm1).
+> `nkp-preload-images.service` pulls konvoy-bootstrap from GHCR at boot — no Docker Hub pull at lab start.
 
 The iximious platform converts OCI images to raw ext4 rootfs images at playground start time (the `RootfsBaked` condition). This bake step is strict — certain filesystem constructs that are valid in a container image will cause `RootfsBaked: False` and abort the playground.
 
@@ -302,13 +302,21 @@ cd rootfs && make controlplane worker
 
 All Rocky VMs fail `RootfsBaked` at the **exact same nanosecond** — this is a deterministic pre-scan rejection at the OCI layer level, not a per-file scan. The bake tool inspects the image before extracting it. Any of the four constructs above triggers immediate rejection of the entire image.
 
-### Current image state (last updated: commit 4c2b08b)
+### Current image state (last updated: commit 3544193)
 
-| Image | Size | Hardlinks | Dangling symlinks | sshd | check-bake.sh | Live bake |
-|---|---|---|---|---|---|---|
-| `nkp-bootstrap:latest` | 1161 MB | ✓ 0 | ✓ 0 | ✓ | ✅ PASS | ✅ RUNNING (all 5 VMs confirmed) |
-| `nkp-controlplane:latest` | 859 MB | ✓ 0 | ✓ 0 | ✓ | ✅ PASS | ✅ RUNNING |
-| `nkp-worker:latest` | 802 MB | ✓ 0 | ✓ 0 | ✓ | ✅ PASS | ✅ RUNNING |
+| Image | Tag | Size | Hardlinks | Dangling symlinks | sshd | check-bake.sh | Live bake |
+|---|---|---|---|---|---|---|---|
+| `nkp-bootstrap` | `v2.17.1-r2` | 1277 MB | ✓ 0 | ✓ 0 | ✓ | ✅ PASS | ✅ RUNNING — `nkp create bootstrap` verified, all 26 CAPI pods Running |
+| `nkp-controlplane` | `latest` | 859 MB | ✓ 0 | ✓ 0 | ✓ | ✅ PASS | ✅ RUNNING — RKE2 server Ready, 2.7 GiB available |
+| `nkp-worker` | `latest` | 802 MB | ✓ 0 | ✓ 0 | ✓ | ✅ PASS | ✅ RUNNING |
+| `konvoy-bootstrap` | `v2.17.1` | 2.37 GB | — | — | — | — | ✅ on GHCR — pulled by nkp-preload-images.service at boot |
+
+**Playground resource limits (confirmed against iximious Flexbox free tier):**
+- Total vCPU cap: **10** → vm1=2, vm2=2, workers=2+2+2
+- Total RAM cap: **16 GiB** → vm1=4Gi, vm2=4Gi, workers=2+2+2 Gi (14 GiB total)
+- vm1 memory at rest after `nkp create bootstrap`: 2.2 GiB used / 1.7 GiB available ✅
+- vm2 memory after RKE2 server start: 1.2 GiB used / 2.7 GiB available ✅
+- `nkp create bootstrap` timing: image loads from Docker cache (via GHCR preload) — no Docker Hub pull
 
 ## Conventions
 
