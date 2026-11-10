@@ -146,23 +146,6 @@ RUN printf '[Unit]\nDescription=Pre-pull konvoy-bootstrap image from GHCR\nAfter
     && systemctl enable nkp-preload-images.service
 
 # ── cluster-pivot.service — auto-pivot once RKE2 cluster is Ready ─────────────
-# Runs after docker.service (needs SSH client). Polls the controlplane every 10s
-# until all 4 nodes are Ready, then copies the kubeconfig and fixes the server IP.
-# After this service completes, 'kubectl get nodes' works for laborant automatically.
-# Students can watch progress: journalctl -u cluster-pivot.service -f
-# ── SSH keypair for inter-VM communication (cluster-pivot) ───────────────────
-# The private key is installed for laborant; the matching public key is baked
-# into the controlplane and worker rootfs images under root's authorized_keys.
-# This is a lab-only key — ephemeral playgrounds only, not production.
-COPY rootfs/bootstrap/ssh-keys/lab_key     /home/laborant/.ssh/lab_key
-COPY rootfs/bootstrap/ssh-keys/lab_key.pub /home/laborant/.ssh/lab_key.pub
-RUN chmod 700 /home/laborant/.ssh \
-    && chmod 600 /home/laborant/.ssh/lab_key \
-    && chmod 644 /home/laborant/.ssh/lab_key.pub \
-    && echo "IdentityFile ~/.ssh/lab_key" >> /home/laborant/.ssh/config \
-    && echo "StrictHostKeyChecking no"   >> /home/laborant/.ssh/config \
-    && chmod 600 /home/laborant/.ssh/config
-
 COPY rootfs/bootstrap/cluster-pivot.sh /usr/local/bin/cluster-pivot.sh
 RUN chmod +x /usr/local/bin/cluster-pivot.sh \
     && printf '[Unit]\nDescription=Auto-pivot kubeconfig once RKE2 cluster is Ready\nAfter=network-online.target\nWants=network-online.target\n\n[Service]\nType=oneshot\nRemainAfterExit=yes\nUser=laborant\nExecStart=/usr/local/bin/cluster-pivot.sh\nStandardOutput=journal\nStandardError=journal\n\n[Install]\nWantedBy=multi-user.target\n' \
@@ -181,11 +164,26 @@ RUN echo 'source <(kubectl completion bash)'                      >> /etc/bash.b
 
 # ── laborant user (required by iximiuz platform) ─────────────────────────────
 # Ubuntu 24.04 ships with an 'ubuntu' user at UID 1000. Rename it to 'laborant'
-# so the iximiuz platform finds the expected user in /etc/passwd.
+# MUST happen before any COPY to /home/laborant — usermod -m moves /home/ubuntu
+# to /home/laborant and will fail if the directory already exists.
 RUN usermod -l laborant -d /home/laborant -m ubuntu \
     && groupmod -n laborant ubuntu \
     && echo 'laborant ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers \
     && usermod -aG docker laborant
+
+# ── SSH keypair for inter-VM communication (cluster-pivot) ───────────────────
+# MUST come AFTER usermod so /home/laborant exists and is owned by laborant.
+# The private key lets cluster-pivot.sh SSH into controlplane without a password.
+COPY rootfs/bootstrap/ssh-keys/lab_key     /home/laborant/.ssh/lab_key
+COPY rootfs/bootstrap/ssh-keys/lab_key.pub /home/laborant/.ssh/lab_key.pub
+RUN chown -R laborant:laborant /home/laborant/.ssh \
+    && chmod 700 /home/laborant/.ssh \
+    && chmod 600 /home/laborant/.ssh/lab_key \
+    && chmod 644 /home/laborant/.ssh/lab_key.pub \
+    && printf 'IdentityFile ~/.ssh/lab_key\nStrictHostKeyChecking no\n' \
+        > /home/laborant/.ssh/config \
+    && chmod 600 /home/laborant/.ssh/config \
+    && chown laborant:laborant /home/laborant/.ssh/config
 
 # ── enable Docker and SSH at boot ─────────────────────────────────────────────
 RUN systemctl enable docker \
