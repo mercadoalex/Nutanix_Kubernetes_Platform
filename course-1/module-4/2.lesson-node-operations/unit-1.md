@@ -7,9 +7,9 @@ name: 2-lesson-node-operations-unit-1
 # Lesson 4.2 — Node Operations: drain, cordon, taints, and tolerations
 
 > **Tier:** 3 — Full Flexbox (5 VMs)
-> **Playground:** `nkp-flexbox.yaml`
+> **Playground:** `nkp-lab`
 > **VMs used:** all five
-> **Prerequisite:** Lesson 4.1 complete — Management Cluster running across vm2–vm5
+> **Prerequisite:** Lesson 4.1 complete — Management Cluster running across worker-01–worker-03
 > **Duration:** ~40 minutes
 
 ---
@@ -23,7 +23,7 @@ Safely take nodes in and out of service — the operations you perform during OS
 - **uncordon** — return a node to service
 - **taints & tolerations** — restrict which pods can run on which nodes
 
-All commands run from **vm1** against the live cluster.
+All commands run from **bootstrap (vm1)** against the live Management Cluster.
 
 ---
 
@@ -50,41 +50,59 @@ _⚠️ Placeholder — replace with real playground screenshot before course la
 
 ### 1.1 Deploy a test workload spread across workers
 
+> 🖥️ **Run on bootstrap (vm1).** Copy and run the following commands in your terminal.
+
 ```bash
 kubectl create deployment drain-test --image=nginx:alpine --replicas=6
 kubectl get pods -l app=drain-test -o wide
 ```
 
-Confirm pods are spread across worker-01, worker-02, and worker-03.
+Confirm pods are spread across worker-01, worker-02, and worker-03. You should see 6 pods distributed across the three worker nodes.
 
 ### 1.2 Cordon worker-02
 
-Cordoning marks a node **unschedulable** — the scheduler will not place new pods on it. Existing pods are not evicted.
+Cordoning marks a node **unschedulable** — the scheduler will not place new pods on it. Existing pods are **not** evicted.
+
+> 🖥️ **Run on bootstrap (vm1).**
 
 ```bash
 kubectl cordon worker-02
 kubectl get nodes
 ```
 
+Expected output:
+
 ```
-NAME           STATUS                     ROLES                       AGE
-controlplane   Ready                      control-plane,etcd           1h
-worker-01      Ready                      <none>                       1h
-worker-02      Ready,SchedulingDisabled   <none>                       1h
-worker-03      Ready                      <none>                       1h
+NAME           STATUS                     ROLES                AGE
+controlplane   Ready                      control-plane,etcd   1h
+worker-01      Ready                      <none>               1h
+worker-02      Ready,SchedulingDisabled   <none>               1h
+worker-03      Ready                      <none>               1h
 ```
 
-`SchedulingDisabled` — worker-02 is cordoned. Existing pods on worker-02 are still running.
+`SchedulingDisabled` — worker-02 is cordoned. Now verify existing pods on worker-02 are still running:
+
+> 🖥️ **Run on bootstrap (vm1).**
 
 ```bash
 kubectl get pods -l app=drain-test -o wide
 ```
 
-Pods on worker-02 are untouched. Only new pods are blocked from landing there.
+Pods on worker-02 are untouched. Only **new** pods are blocked from landing there.
 
 ### 1.3 Drain worker-02
 
-Drain evicts all non-daemonset, non-mirror pods from a node gracefully. Each pod is given a chance to terminate cleanly before it is killed.
+Drain evicts all non-daemonset pods from a node gracefully. Each pod is given time to terminate cleanly before the next one is evicted.
+
+> 🖥️ **Open a second terminal on bootstrap (vm1) and run the watch command first, then run the drain in your first terminal.**
+
+Second terminal — watch pods reschedule in real time:
+
+```bash
+kubectl get pods -l app=drain-test -o wide -w
+```
+
+First terminal — drain the node:
 
 ```bash
 kubectl drain worker-02 \
@@ -95,50 +113,53 @@ kubectl drain worker-02 \
 - `--ignore-daemonsets` — DaemonSet pods (like Cilium agents) cannot be evicted; this flag skips them
 - `--delete-emptydir-data` — allows evicting pods that use `emptyDir` volumes (data is lost — expected for stateless pods)
 
-Watch pods reschedule in real time in a second terminal:
-
-```bash
-kubectl get pods -l app=drain-test -o wide -w
-```
-
-Pods that were on worker-02 are terminated and rescheduled onto worker-01 and worker-03.
+Watch the second terminal: pods that were on worker-02 are terminated and rescheduled onto worker-01 and worker-03.
 
 ### 1.4 Verify
+
+> 🖥️ **Run on bootstrap (vm1).**
 
 ```bash
 kubectl get pods -l app=drain-test -o wide
 ```
 
-No pods on worker-02. worker-01 and worker-03 carry the full 6 replicas.
+No pods should appear on worker-02. worker-01 and worker-03 now carry all 6 replicas.
 
 ### 1.5 Perform maintenance (simulated)
 
+In a real scenario you would now SSH into worker-02 and perform your OS patch or hardware operation. Here we simulate it:
+
+> 🖥️ **Run on bootstrap (vm1).**
+
 ```bash
-# On worker-02 — simulate an OS patch
-echo "Patching worker-02..."
+echo "Simulating maintenance on worker-02..."
 sleep 5
-echo "Done"
+echo "Maintenance complete."
 ```
 
 ### 1.6 Uncordon worker-02
+
+When maintenance is complete, return the node to service:
+
+> 🖥️ **Run on bootstrap (vm1).**
 
 ```bash
 kubectl uncordon worker-02
 kubectl get nodes
 ```
 
-worker-02 returns to `Ready`. The scheduler can now place new pods on it again.
-
-Scale the deployment up to trigger rescheduling onto worker-02:
+worker-02 returns to `Ready`. Now scale up to trigger rescheduling onto the returned node:
 
 ```bash
 kubectl scale deployment drain-test --replicas=9
 kubectl get pods -l app=drain-test -o wide
 ```
 
-New pods land on worker-02.
+New pods land on worker-02 — it is back in rotation.
 
 ### 1.7 Clean up
+
+> 🖥️ **Run on bootstrap (vm1).**
 
 ```bash
 kubectl delete deployment drain-test
@@ -150,12 +171,11 @@ kubectl delete deployment drain-test
 
 ::image-box
 ---
-:src: __static__/placeholder-kubectl-get-nodes-cordoned.png
-:alt: 'kubectl get nodes showing vm4 in Ready,SchedulingDisabled state after cordon'
+:src: __static__/kubectl-drain-v1.png
+:alt: 'kubectl get nodes showing worker-02 in Ready,SchedulingDisabled state after cordon'
 ---
-_TODO: Replace with actual screenshot — After `kubectl cordon vm4`, run `kubectl get nodes` and capture the output showing vm4 with the STATUS column reading "Ready,SchedulingDisabled" while vm3 and vm5 remain Ready_
+_⚠️ Placeholder — replace with real playground screenshot before course launch._
 ::
-
 
 **Taints** prevent pods from being scheduled onto a node unless the pod explicitly **tolerates** the taint. Used to:
 - Reserve nodes for specific workloads (GPU, high-memory)
@@ -163,6 +183,8 @@ _TODO: Replace with actual screenshot — After `kubectl cordon vm4`, run `kubec
 - Enforce placement constraints without affinity rules
 
 ### 2.1 Taint a node
+
+> 🖥️ **Run on bootstrap (vm1).**
 
 ```bash
 kubectl taint node worker-03 dedicated=gpu:NoSchedule
@@ -178,15 +200,21 @@ Format: `key=value:effect`
 
 ### 2.2 Verify the taint is applied
 
+> 🖥️ **Run on bootstrap (vm1).**
+
 ```bash
 kubectl describe node worker-03 | grep -A5 Taints
 ```
+
+Expected output:
 
 ```
 Taints: dedicated=gpu:NoSchedule
 ```
 
 ### 2.3 Deploy without a toleration
+
+> 🖥️ **Run on bootstrap (vm1).** Deploy and observe where pods land.
 
 ```bash
 kubectl create deployment no-toleration --image=nginx:alpine --replicas=9
@@ -197,8 +225,12 @@ No pods land on worker-03 — they all go to worker-01 and worker-02. worker-03 
 
 ### 2.4 Deploy with a toleration
 
-```yaml
-# toleration-deploy.yaml
+Create the manifest file, then apply it:
+
+> 🖥️ **Run on bootstrap (vm1).**
+
+```bash
+cat > toleration-deploy.yaml <<'EOF'
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -221,16 +253,18 @@ spec:
       containers:
         - name: nginx
           image: nginx:alpine
-```
-
-```bash
+EOF
 kubectl apply -f toleration-deploy.yaml
 kubectl get pods -l app=with-toleration -o wide
 ```
 
-These pods **can** land on vm5. They may also land on vm3/vm4 — tolerations allow scheduling on a tainted node, they do not force it. To force pods onto a specific node, combine a toleration with a **nodeSelector** or **nodeAffinity**.
+These pods **can** land on worker-03. They may also land on worker-01/worker-02 — tolerations *allow* scheduling on a tainted node, they do not *force* it.
 
 ### 2.5 Force pods onto the tainted node (nodeSelector)
+
+To force pods exclusively onto worker-03, combine the toleration with a nodeSelector:
+
+> 🖥️ **Run on bootstrap (vm1).**
 
 ```bash
 kubectl patch deployment with-toleration --type=json -p='[
@@ -243,15 +277,14 @@ All pods now run exclusively on worker-03.
 
 ### 2.6 Remove the taint
 
+> 🖥️ **Run on bootstrap (vm1).** The trailing `-` removes the taint.
+
 ```bash
 kubectl taint node worker-03 dedicated=gpu:NoSchedule-
-```
-
-The trailing `-` removes the taint.
-
-```bash
 kubectl describe node worker-03 | grep Taints
 ```
+
+Expected output:
 
 ```
 Taints: <none>
@@ -259,8 +292,11 @@ Taints: <none>
 
 ### 2.7 Clean up
 
+> 🖥️ **Run on bootstrap (vm1).**
+
 ```bash
 kubectl delete deployment no-toleration with-toleration
+rm toleration-deploy.yaml
 ```
 
 ---
@@ -269,25 +305,29 @@ kubectl delete deployment no-toleration with-toleration
 
 ::image-box
 ---
-:src: __static__/placeholder-kubectl-uncordon-output.png
-:alt: 'kubectl uncordon vm4 output followed by kubectl get nodes showing vm4 back to Ready status'
+:src: __static__/kubectl-drain-v1.png
+:alt: 'kubectl uncordon worker-02 output followed by kubectl get nodes showing worker-02 back to Ready status'
 ---
-_TODO: Replace with actual screenshot — Run `kubectl uncordon vm4` then `kubectl get nodes` and capture both commands showing vm4 returning to plain Ready status with no SchedulingDisabled label_
+_⚠️ Placeholder — replace with real playground screenshot before course launch._
 ::
-
 
 A **PodDisruptionBudget (PDB)** limits how many pods of a deployment can be down simultaneously during voluntary disruptions (drain, rolling update). It prevents a drain from taking down more replicas than your application can tolerate.
 
 ### 3.1 Deploy an app
 
+> 🖥️ **Run on bootstrap (vm1).**
+
 ```bash
 kubectl create deployment pdb-app --image=nginx:alpine --replicas=4
+kubectl get pods -l app=pdb-app -o wide
 ```
 
 ### 3.2 Create a PDB — minimum 3 pods always available
 
-```yaml
-# pdb.yaml
+> 🖥️ **Run on bootstrap (vm1).** Create the PDB manifest and apply it.
+
+```bash
+cat > pdb.yaml <<'EOF'
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
@@ -297,12 +337,12 @@ spec:
   selector:
     matchLabels:
       app: pdb-app
-```
-
-```bash
+EOF
 kubectl apply -f pdb.yaml
 kubectl get pdb
 ```
+
+Expected output:
 
 ```
 NAME      MIN AVAILABLE   MAX UNAVAILABLE   ALLOWED DISRUPTIONS   AGE
@@ -313,18 +353,23 @@ pdb-app   3               N/A               1                     5s
 
 ### 3.3 Test drain with PDB active
 
+> 🖥️ **Run on bootstrap (vm1).** Watch how the drain respects the PDB.
+
 ```bash
 kubectl drain worker-01 --ignore-daemonsets --delete-emptydir-data
 ```
 
-The drain proceeds but respects the PDB — it evicts one pod at a time, waiting for it to reschedule before evicting the next. If the PDB would be violated, drain blocks and waits.
+The drain evicts one pod at a time, waiting for it to reschedule before evicting the next. If evicting a pod would violate the PDB, drain blocks and waits until a replacement is Running.
 
 ### 3.4 Uncordon and clean up
+
+> 🖥️ **Run on bootstrap (vm1).**
 
 ```bash
 kubectl uncordon worker-01
 kubectl delete deployment pdb-app
 kubectl delete pdb pdb-app
+rm pdb.yaml
 ```
 
 ---
