@@ -150,7 +150,7 @@ RUN printf '[Unit]\nDescription=Pre-pull konvoy-bootstrap image from GHCR\nAfter
 # until all 4 nodes are Ready, then copies the kubeconfig and fixes the server IP.
 # After this service completes, 'kubectl get nodes' works for laborant automatically.
 # Students can watch progress: journalctl -u cluster-pivot.service -f
-COPY bootstrap/cluster-pivot.sh /usr/local/bin/cluster-pivot.sh
+COPY rootfs/bootstrap/cluster-pivot.sh /usr/local/bin/cluster-pivot.sh
 RUN chmod +x /usr/local/bin/cluster-pivot.sh \
     && printf '[Unit]\nDescription=Auto-pivot kubeconfig once RKE2 cluster is Ready\nAfter=network-online.target\nWants=network-online.target\n\n[Service]\nType=oneshot\nRemainAfterExit=yes\nUser=laborant\nExecStart=/usr/local/bin/cluster-pivot.sh\nStandardOutput=journal\nStandardError=journal\n\n[Install]\nWantedBy=multi-user.target\n' \
         > /etc/systemd/system/cluster-pivot.service \
