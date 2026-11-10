@@ -1,40 +1,39 @@
 ---
 kind: unit
-title: "Lesson 06 — Bootstrap & Pivot: Building the Management Cluster"
+title: "Lesson 4.1 — Bootstrap & Pivot: Building the Management Cluster"
 name: 1-lesson-bootstrap-pivot-unit-1
 ---
 
-# Lesson 06 — Bootstrap & Pivot: Building the Management Cluster
+# Lesson 4.1 — Bootstrap & Pivot: Building the Management Cluster
 
-> **Tier:** 3 — Full Flexbox (5 VMs)  
-> **Playground:** `nkp-flexbox.yaml`  
-> **VMs used:** all five — vm1 (bootstrap), vm2 (controlplane), vm3–vm5 (workers)  
-> **Duration:** ~45 minutes
+> **Tier:** 3 — Full Flexbox (5 VMs)
+> **Playground:** `nkp-lab`
+> **VMs used:** all five — bootstrap (vm1), controlplane (vm2), worker-01–03 (vm3–5)
+> **Duration:** ~30 minutes
 
 ---
 
 ## What you will do
 
-In production, `nkp create cluster` calls Prism Central and provisions VMs for you. In this lab the VMs already exist — RKE2 is pre-installed on vm2–vm5. Your job is to replay the same logical steps:
+In production, `nkp create cluster` calls Prism Central and provisions VMs for you. In this lab the VMs already exist — RKE2 is pre-installed and auto-started on vm2–vm5. Your job is to replay the same logical steps that NKP performs:
 
-1. Start the **Bootstrap Cluster** (a `kind` cluster) on vm1
-2. Start the **RKE2 server** on vm2 — this becomes the Management Cluster control plane
-3. Join **vm3, vm4, vm5** as worker nodes
-4. **Pivot** — point your kubeconfig at the Management Cluster and verify it is fully operational
-5. Delete the Bootstrap Cluster — it is no longer needed
+1. **Observe** — the Management Cluster is already running (RKE2 auto-started at playground boot)
+2. **Run `nkp create bootstrap`** — start the kind Bootstrap Cluster on vm1 with all CAPI controllers
+3. **Understand the pivot** — see how `nkp move` hands control from the Bootstrap Cluster to the Management Cluster
+4. **Delete the Bootstrap Cluster** — it is no longer needed
 
-By the end, you have a live 4-node Kubernetes cluster running RKE2, and you understand exactly what `nkp move` does under the hood.
+By the end you understand exactly what happens inside NKP when a cluster is created and handed off.
 
 ---
 
 ## Lab topology
 
 ```
-vm1  172.16.0.10   Bootstrap / operator workstation   (Ubuntu 24.04)
-vm2  172.16.0.11   Management Cluster — control plane  (Rocky 9.7 / RKE2 server)
-vm3  172.16.0.12   Management Cluster — worker-01      (Rocky 9.7 / RKE2 agent)
-vm4  172.16.0.13   Management Cluster — worker-02      (Rocky 9.7 / RKE2 agent)
-vm5  172.16.0.14   Management Cluster — worker-03      (Rocky 9.7 / RKE2 agent)
+bootstrap     172.16.0.10   Bootstrap / operator workstation   (Ubuntu 24.04)
+controlplane  172.16.0.11   Management Cluster — control plane  (Rocky 9.7 / RKE2 server)
+worker-01     172.16.0.12   Management Cluster — worker         (Rocky 9.7 / RKE2 agent)
+worker-02     172.16.0.13   Management Cluster — worker         (Rocky 9.7 / RKE2 agent)
+worker-03     172.16.0.14   Management Cluster — worker         (Rocky 9.7 / RKE2 agent)
 ```
 
 All five VMs share the `172.16.0.0/24` network. The RKE2 registration port is **9345**; the Kubernetes API listens on **6443**.
@@ -48,22 +47,57 @@ All five VMs share the `172.16.0.0/24` network. The RKE2 registration port is **
 | NKP CLI (`nkp`) | 2.17.1 |
 | RKE2 | v1.34.3+rke2r1 |
 | Kubernetes | 1.34.3 |
-| CNI | Cilium (RKE2 default, built into the airgap bundle) |
+| CNI | Cilium (RKE2 default) |
 
 ---
 
-## Part 1 — Start the Bootstrap Cluster (vm1)
+## Before you start — the cluster is already running
+
+When this playground booted, three things happened automatically in the background:
+
+1. **controlplane** — `rke2-server` started via systemd
+2. **worker-01, worker-02, worker-03** — `rke2-agent` started and joined the control plane
+3. **bootstrap** — `cluster-pivot.service` waited until all 4 nodes were Ready, then copied the kubeconfig
+
+> 🖥️ **Run on bootstrap (vm1).** Confirm the cluster is Ready before starting:
+
+```bash
+kubectl get nodes -o wide
+```
+
+Expected output:
+
+```
+NAME           STATUS   ROLES                AGE   VERSION          INTERNAL-IP
+controlplane   Ready    control-plane,etcd   2m    v1.34.3+rke2r1   172.16.0.11
+worker-01      Ready    <none>               90s   v1.34.3+rke2r1   172.16.0.12
+worker-02      Ready    <none>               90s   v1.34.3+rke2r1   172.16.0.13
+worker-03      Ready    <none>               90s   v1.34.3+rke2r1   172.16.0.14
+```
+
+If the cluster is not yet Ready, wait 1–2 minutes and retry. You can watch the auto-pivot progress:
+
+```bash
+journalctl -u cluster-pivot.service --no-pager | tail -20
+```
+
+---
+
+## Part 1 — Start the Bootstrap Cluster
 
 ::image-box
 ---
 :src: __static__/nkp-create-bootstrap-v1.png
-:alt: 'docker ps output on vm1 showing the kind bootstrap cluster container running'
+:alt: 'Terminal output of nkp create bootstrap completing successfully'
 ---
+_⚠️ Placeholder — replace with real screenshot before course launch._
 ::
 
-Open a terminal on **vm1**.
+This is the only part of the lesson where you replicate what NKP does in production. In production, `nkp create bootstrap` runs on the jump host before `nkp create cluster`. Here you run it to see exactly what it does.
 
 ### 1.1 Verify tooling
+
+> 🖥️ **Run on bootstrap (vm1).**
 
 ```bash
 nkp version
@@ -71,251 +105,168 @@ kubectl version --client
 kind version
 ```
 
-Expected output includes `v2.17.1`, `v1.34.3`, and `v0.27.0` respectively. If any command is missing, the rootfs image was not loaded correctly — re-launch the playground.
-
-::image-box
----
-:src: __static__/nkp-version-v1.png
-:alt: 'Terminal output showing nkp version v2.17.1, kubectl version v1.34.3, and kind version v0.27.0'
----
-::
+You should see `v2.17.1`, `v1.34.3`, and `v0.27.0` respectively.
 
 ### 1.2 Create the Bootstrap Cluster
+
+> 🖥️ **Run on bootstrap (vm1).**
 
 ```bash
 nkp create bootstrap
 ```
 
-`nkp` uses `kind` under the hood to create a local Kubernetes cluster, then installs the **Cluster API controllers** and the **Nutanix infrastructure provider** inside it.
+`nkp` uses `kind` under the hood to create a local Kubernetes cluster, then installs the **Cluster API controllers** and all infrastructure providers (CAPX, CAREN, CAPA, CAPZ, CAPG...) inside it.
 
-> 📺 In production this cluster talks to Prism Central to provision real AHV VMs.  
-> In this lab we skip that step — vm2–vm5 already exist with RKE2 pre-installed.
+> 📺 In production this cluster's CAPI controllers talk to Prism Central to provision real AHV VMs.
+> In this lab we skip that — vm2–vm5 already exist.
 
-::image-box
----
-:src: __static__/pulling-bootstrap-image-v1.png
-:alt: 'Terminal output showing nkp create bootstrap pulling the kind bootstrap cluster image'
----
-::
-
-Watch the output. You will see:
+Watch the output:
 
 ```
-✓ Bootstrap cluster created
-✓ CAPI controllers installed
-✓ Nutanix provider installed
+✓ Creating a bootstrap cluster
+✓ Initializing new CAPI components
+✓ Creating ClusterClass resources
 ```
+
+**This completes in ~2 minutes** — the `konvoy-bootstrap` image was pre-pulled at playground start.
 
 ### 1.3 Inspect the Bootstrap Cluster
 
+> 🖥️ **Run on bootstrap (vm1).**
+
 ```bash
+kubectl config current-context
 kubectl get nodes
 ```
 
 ```
-NAME                         STATUS   ROLES           AGE   VERSION
-nkp-bootstrap-control-plane  Ready    control-plane   30s   v1.34.x
+NAME                                   STATUS   ROLES           AGE
+konvoy-capi-bootstrapper-control-plane Ready    control-plane   2m
 ```
 
-A single `kind` node. This is not a real cluster — it is scaffolding.
+This is the `kind` node — a single container running an entire Kubernetes control plane. It is scaffolding, not a real cluster.
+
+Now look at what's running inside it:
 
 ```bash
-kubectl get pods -n capi-system
-kubectl get pods -n capx-system    # Nutanix provider (CAPX)
-kubectl get pods -n caren-system   # Runtime extensions (CAREN)
+kubectl get pods -A | grep -E "NAMESPACE|capi|capx|caren|cert"
 ```
 
-You should see the CAPI core controllers, CAPX (Cluster API Provider for Nutanix), and CAREN (Cluster API Runtime Extensions for Nutanix) running.
+```
+NAMESPACE      NAME                                              READY   STATUS
+capi-system    capi-controller-manager-...                       1/1     Running
+capx-system    capx-controller-manager-...                       1/1     Running
+caren-system   cluster-api-runtime-extensions-nutanix-...        1/1     Running
+cert-manager   cert-manager-...                                  1/1     Running
+```
+
+These are the **CAPI controllers** — the brain of NKP cluster provisioning.
 
 ---
 
-## Part 2 — Start the RKE2 server on vm2
+## Part 2 — Observe the Management Cluster
 
-::image-box
----
-:src: __static__/kubectl-get-pods-v1.png
-:alt: 'kubectl get pods -n capi-system showing CAPI core controllers and Nutanix provider pods all Running'
----
-::
+The Management Cluster was already built by the playground. This section explains what happened so you understand each component.
 
+### 2.1 What ran on controlplane (vm2)
 
-Switch to the **vm2** terminal.
-
-### 2.1 Set the cluster token
-
-The token is a shared secret all nodes use to authenticate to each other. Pick any string — it just needs to be consistent across all VMs.
+> 🖥️ **Switch to the controlplane terminal.**
 
 ```bash
-mkdir -p /etc/rancher/rke2
-cat > /etc/rancher/rke2/config.yaml <<'EOF'
+sudo systemctl status rke2-server --no-pager | head -5
+```
+
+`rke2-server` is `active (running)` — it started automatically at boot. The config was baked into the image:
+
+```bash
+cat /etc/rancher/rke2/config.yaml
+```
+
+```yaml
 token: "nkp-lab-token-2024"
 tls-san:
   - "172.16.0.11"
-  - "vm2"
+  - "controlplane"
 cni: cilium
 disable:
   - rke2-ingress-nginx
 write-kubeconfig-mode: "0644"
-EOF
 ```
 
-> ℹ️ A `config.yaml` skeleton is already present from the rootfs build. The block above **replaces** it with the live token and IP values for this lab run.
+In production you would write this config before running `systemctl enable --now rke2-server`.
 
-### 2.2 Start RKE2 server
+### 2.2 What ran on the workers (vm3–5)
+
+> 🖥️ **Switch to any worker terminal (worker-01, worker-02, or worker-03).**
 
 ```bash
-systemctl enable --now rke2-server
+sudo systemctl status rke2-agent --no-pager | head -5
+cat /etc/rancher/rke2/config.yaml
 ```
 
-Follow the startup logs in a second pane:
+```yaml
+server: "https://172.16.0.11:9345"
+token: "nkp-lab-token-2024"
+```
+
+The workers have the same token as the control plane and know where to register. In production you copy this token from `cat /var/lib/rancher/rke2/server/node-token` on the control plane.
+
+### 2.3 What ran on bootstrap (vm1)
+
+> 🖥️ **Back on bootstrap (vm1).**
+
+The `cluster-pivot.service` ran automatically. It:
+1. Waited for SSH to become available on `172.16.0.11`
+2. Waited for `rke2.yaml` to be written by RKE2
+3. Copied the kubeconfig and fixed the server address
+4. Waited until all 4 nodes showed `Ready`
 
 ```bash
-journalctl -u rke2-server -f
-```
-
-RKE2 will:
-1. Load the airgap image bundles from `/var/lib/rancher/rke2/agent/images/` into containerd
-2. Start `etcd`
-3. Start `kube-apiserver`, `kube-controller-manager`, `kube-scheduler`
-4. Start `kubelet` and register vm2 as a node
-5. Deploy Cilium as the CNI
-
-**This takes 3–5 minutes.** Wait for the line:
-
-```
-Node controller sync successful
-```
-
-### 2.3 Verify the control plane is up
-
-```bash
-export KUBECONFIG=/etc/rancher/rke2/rke2.yaml
-kubectl get nodes
+journalctl -u cluster-pivot.service --no-pager
 ```
 
 ```
-NAME   STATUS   ROLES                       AGE   VERSION
-vm2    Ready    control-plane,etcd,master   4m    v1.34.3+rke2r1
+[cluster-pivot] Waiting for controlplane SSH...
+[cluster-pivot] controlplane SSH ready
+[cluster-pivot] Waiting for RKE2 kubeconfig on controlplane...
+[cluster-pivot] RKE2 kubeconfig ready
+[cluster-pivot] kubeconfig copied to /home/laborant/.kube/mgmt.kubeconfig
+[cluster-pivot] ...1/4 nodes Ready (30s)
+[cluster-pivot] All 4 nodes Ready ✓
+[cluster-pivot] Cluster pivot complete. Run: kubectl get nodes
 ```
 
-### 2.4 Retrieve the node join token
-
-```bash
-cat /var/lib/rancher/rke2/server/node-token
-```
-
-Copy this value — you will paste it on vm3, vm4, and vm5 in the next step.
-
-```
-K10abc123...::server:xyz789...
-```
+This is exactly what `nkp move` does — it transfers control from the Bootstrap Cluster to the Management Cluster.
 
 ---
 
-## Part 3 — Join worker nodes (vm3, vm4, vm5)
+## Part 3 — Explore the Management Cluster
 
-**Repeat these steps on vm3, vm4, and vm5.** Open three terminals (one per VM) and run them in parallel — the join steps are identical and independent.
+::image-box
+---
+:src: __static__/the-pivot-v1.png
+:alt: 'kubectl get nodes showing all four cluster nodes in Ready status after pivot'
+---
+_⚠️ Placeholder — replace with real screenshot before course launch._
+::
 
-### 3.1 Write the agent config
+> 🖥️ **Run on bootstrap (vm1).**
 
-Replace `<TOKEN>` with the value from vm2:
-
-```bash
-mkdir -p /etc/rancher/rke2
-cat > /etc/rancher/rke2/config.yaml <<'EOF'
-server: "https://172.16.0.11:9345"
-token: "K10abc123...::server:xyz789..."
-EOF
-```
-
-> ⚠️ Use the **full token string** from `cat /var/lib/rancher/rke2/server/node-token` on vm2, not the short `nkp-lab-token-2024` string. The node-token is derived from it and is what agents authenticate with.
-
-### 3.2 Start RKE2 agent
-
-```bash
-systemctl enable --now rke2-agent
-```
-
-Watch logs:
-
-```bash
-journalctl -u rke2-agent -f
-```
-
-Wait for:
-```
-Successfully registered node
-```
-
-**Each worker takes 2–3 minutes to join.** Running them in parallel means all three are done in ~3 minutes total.
-
-### 3.3 Confirm all workers joined (back on vm2)
+### 3.1 Verify all nodes and their roles
 
 ```bash
 kubectl get nodes -o wide
 ```
 
 ```
-NAME   STATUS   ROLES                       AGE    VERSION           INTERNAL-IP
-vm2    Ready    control-plane,etcd,master   10m    v1.34.3+rke2r1   172.16.0.11
-vm3    Ready    <none>                      2m     v1.34.3+rke2r1   172.16.0.12
-vm4    Ready    <none>                      2m     v1.34.3+rke2r1   172.16.0.13
-vm5    Ready    <none>                      2m     v1.34.3+rke2r1   172.16.0.14
+NAME           STATUS   ROLES                AGE   VERSION          INTERNAL-IP
+controlplane   Ready    control-plane,etcd   5m    v1.34.3+rke2r1   172.16.0.11
+worker-01      Ready    <none>               3m    v1.34.3+rke2r1   172.16.0.12
+worker-02      Ready    <none>               3m    v1.34.3+rke2r1   172.16.0.13
+worker-03      Ready    <none>               3m    v1.34.3+rke2r1   172.16.0.14
 ```
 
-All four nodes `Ready`. The Management Cluster is operational.
-
----
-
-## Part 4 — Pivot (vm1)
-
-::image-box
----
-:src: __static__/the-pivot-v1.png
-:alt: 'kubectl get nodes showing all four cluster nodes (vm2 control-plane, vm3-vm5 workers) in Ready status after pivot'
----
-::
-
-
-Back on **vm1**. This is the logical equivalent of `nkp move` — you stop using the Bootstrap Cluster as your control point and switch to the Management Cluster directly.
-
-### 4.1 Copy the kubeconfig from vm2
-
-```bash
-mkdir -p ~/.kube
-scp root@172.16.0.11:/etc/rancher/rke2/rke2.yaml ~/.kube/mgmt.kubeconfig
-```
-
-The kubeconfig from vm2 will have `127.0.0.1` as the server address — fix it to the real IP:
-
-```bash
-sed -i 's/127.0.0.1/172.16.0.11/' ~/.kube/mgmt.kubeconfig
-```
-
-### 4.2 Switch context to the Management Cluster
-
-```bash
-export KUBECONFIG=~/.kube/mgmt.kubeconfig
-kubectl get nodes
-```
-
-```
-NAME   STATUS   ROLES                       AGE    VERSION
-vm2    Ready    control-plane,etcd,master   12m    v1.34.3+rke2r1
-vm3    Ready    <none>                      4m     v1.34.3+rke2r1
-vm4    Ready    <none>                      4m     v1.34.3+rke2r1
-vm5    Ready    <none>                      4m     v1.34.3+rke2r1
-```
-
-You are now operating against the real Management Cluster from vm1 — exactly as you would after `nkp move` in production.
-
-### 4.3 Verify core system pods
-
-```bash
-kubectl get pods -A | grep -v Running
-```
-
-Only `Completed` pods (init/job pods) should appear — no `Pending` or `CrashLoopBackOff`. If any pod is stuck, check its logs before continuing.
+### 3.2 Verify core system pods
 
 ```bash
 kubectl get pods -n kube-system
@@ -329,144 +280,23 @@ Key pods to confirm running:
 | `cilium-operator-` | CNI control plane |
 | `rke2-coredns-` | Cluster DNS |
 | `rke2-metrics-server-` | Metrics API |
-| `etcd-vm2` | etcd for the control plane |
-| `kube-apiserver-vm2` | Kubernetes API server |
+| `etcd-controlplane` | etcd |
+| `kube-apiserver-controlplane` | Kubernetes API server |
 
-### 4.4 Delete the Bootstrap Cluster
+### 3.3 Explore with k9s
 
-The Bootstrap Cluster's job is done. In production `nkp move` deletes it automatically. Here you do it manually:
-
-```bash
-nkp delete bootstrap
-```
-
-```
-✓ Bootstrap cluster deleted
-```
-
-Verify it is gone:
+> 🖥️ **Run on bootstrap (vm1).**
 
 ```bash
-kind get clusters
+k9s
 ```
 
-```
-No kind clusters found.
-```
+- Press `0` to see all namespaces
+- Press `:nodes` to jump to the node view
+- Use `d` to describe a node
+- Press `q` to quit
 
-The scaffolding is down. The Management Cluster stands on its own.
-
----
-
-## Part 5 — Install NKP (Kommander) on the Management Cluster
-
-> **vm1** — operator workstation
-
-At this point you have a clean 4-node RKE2 cluster. It is Kubernetes — but not yet NKP.
-NKP is the management layer on top: **Kommander** (multi-cluster dashboard + GitOps engine),
-**Flux CD** (add-on lifecycle), **CAPI controllers**, and the **cert-manager** + **traefik** stack.
-
-`nkp install kommander` installs all of this into your existing cluster. No Bootstrap Cluster needed.
-
-> ℹ️ **Lab note** — The Bootstrap Cluster step (Part 1) runs interactively in this lab.
-> `nkp create bootstrap` fits within the 4 GiB vm1 allocation (validated: 2.2 GiB used,
-> 1.7 GiB headroom after all 26 CAPI pods are Running). The `nkp install kommander` step
-> below runs directly against the Management Cluster on vm2.
-
-### 5.1 Verify prerequisites
-
-```bash
-# On vm1 — confirm you are pointing at the Management Cluster
-export KUBECONFIG=~/.kube/mgmt.kubeconfig
-kubectl get nodes
-```
-
-All four nodes must be `Ready` before proceeding.
-
-```bash
-# Confirm nkp CLI version
-nkp version
-```
-
-### 5.2 Install Kommander
-
-```bash
-nkp install kommander \
-  --kubeconfig ~/.kube/mgmt.kubeconfig
-```
-
-This command:
-1. Installs **cert-manager** (TLS certificate management)
-2. Installs **Flux CD** (GitOps engine — manages all NKP add-ons via HelmReleases)
-3. Installs **Traefik** (Layer 7 ingress controller)
-4. Installs **Kommander** (multi-cluster management dashboard)
-5. Installs **CAPI core controllers + CAPX** (Cluster API for Nutanix)
-
-**This takes 10–15 minutes.** Watch progress in a second terminal:
-
-```bash
-watch -n5 'kubectl get pods -A | grep -v Running | grep -v Completed'
-```
-
-Wait until no pods remain in `Pending`, `Init`, or `ContainerCreating` state.
-
-### 5.3 Verify the installation
-
-```bash
-kubectl get pods -n kommander
-kubectl get pods -n flux-system
-kubectl get pods -n cert-manager
-kubectl get pods -n capi-system
-kubectl get pods -n capx-system
-```
-
-All pods should be `Running` or `Completed`.
-
-### 5.4 Get the Kommander dashboard URL
-
-```bash
-kubectl get svc -n kommander kommander-traefik \
-  -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
-```
-
-> ℹ️ In the lab MetalLB provides the LoadBalancer IP (pool: `172.16.0.100–172.16.0.120`).
-> Open `https://<IP>/dkp/kommander/dashboard` in your browser.
-
-### 5.5 Get the initial admin credentials
-
-```bash
-kubectl get secret dkp-credentials \
-  -n kommander \
-  -o jsonpath='{.data.password}' | base64 -d
-echo
-```
-
-Login: `admin` / `<password from above>`
-
----
-
-## Part 6 — Explore your cluster
-
-### 6.1 Check cluster info
-
-```bash
-kubectl cluster-info
-```
-
-```
-Kubernetes control plane is running at https://172.16.0.11:6443
-CoreDNS is running at https://172.16.0.11:6443/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
-```
-
-### 6.2 Inspect the nodes with k9s (optional)
-
-```bash
-k9s --kubeconfig ~/.kube/mgmt.kubeconfig
-```
-
-Press `0` to see all namespaces. Press `:nodes` to jump to the node view. Use `d` to describe a node. Press `q` to quit.
-
-### 6.3 Run a test workload
+### 3.4 Run a test workload
 
 Confirm the cluster can schedule and run pods:
 
@@ -483,80 +313,86 @@ kubectl delete pod nginx
 
 ---
 
+## Part 4 — Delete the Bootstrap Cluster
+
+The Bootstrap Cluster's job is done. In production `nkp move` deletes it automatically. Here you do it manually:
+
+> 🖥️ **Run on bootstrap (vm1).**
+
+```bash
+nkp delete bootstrap
+kind get clusters
+```
+
+```
+✓ Deleting bootstrap cluster
+No kind clusters found.
+```
+
+The scaffolding is gone. The Management Cluster stands on its own — it is now **self-managed**.
+
+---
+
 ## What just happened — the pivot explained
 
-
-
 ```
-BEFORE PIVOT                        AFTER PIVOT
+BEFORE PIVOT                         AFTER PIVOT
 
-vm1 (Bootstrap)                     vm1 (operator workstation only)
-└─ kind cluster                     └─ kubeconfig → vm2:6443
-   └─ CAPI controllers
-   └─ Nutanix provider              vm2 (Management Cluster CP)
-                                    └─ RKE2 server
-vm2  RKE2 server  (standalone)      └─ Kubernetes API
-vm3  RKE2 agent                     └─ etcd
-vm4  RKE2 agent                     vm3  worker node
-vm5  RKE2 agent                     vm4  worker node
-                                    vm5  worker node
+bootstrap (vm1)                      bootstrap (vm1)
+└─ kind cluster                      └─ kubeconfig → controlplane:6443
+   └─ CAPI controllers               └─ Bootstrap cluster deleted
+   └─ Nutanix provider
+
+controlplane  RKE2 server            controlplane  Management Cluster CP
+worker-01     RKE2 agent             worker-01     worker node
+worker-02     RKE2 agent             worker-02     worker node
+worker-03     RKE2 agent             worker-03     worker node
 ```
 
-In production, `nkp move` also migrates the `Cluster`, `Machine`, and `NutanixCluster` CRD objects from the Bootstrap Cluster into the Management Cluster, so the Management Cluster can manage its own lifecycle. In the lab we skip this because there are no CAPI objects to migrate — the VMs were pre-provisioned.
+In production, `nkp move` also migrates the `Cluster`, `Machine`, and `NutanixCluster` CRD objects from the Bootstrap Cluster into the Management Cluster — so the Management Cluster can manage its own lifecycle going forward. In the lab we skip this because there are no CAPI objects to migrate (the VMs were pre-provisioned).
 
 ---
 
 ## Troubleshooting
 
-### RKE2 server stuck at startup
+### Cluster not Ready after 5 minutes
 
 ```bash
-journalctl -u rke2-server --no-pager | tail -50
+journalctl -u cluster-pivot.service --no-pager | tail -20
+sudo systemctl status rke2-server --no-pager   # on controlplane
+sudo systemctl status rke2-agent --no-pager    # on any worker
 ```
 
-Common causes:
-- **Port 6443 already in use** — check `ss -tlnp | grep 6443`
-- **Airgap bundles not loaded** — check `ls /var/lib/rancher/rke2/agent/images/`; if empty the rootfs image was not built correctly
+### `nkp create bootstrap` fails with webhook errors
+
+The CAPI webhooks are still initializing. Wait 60 seconds and run again — `nkp create bootstrap` detects the existing cluster and retries cleanly:
+
+```bash
+nkp create bootstrap
+```
 
 ### Worker node stuck in `NotReady`
 
 ```bash
 # On the worker VM
-journalctl -u rke2-agent --no-pager | tail -30
+sudo journalctl -u rke2-agent --no-pager | tail -30
+# Verify connectivity
+curl -k https://172.16.0.11:9345/ping
 ```
-
-Common causes:
-- **Wrong token** — re-check `cat /var/lib/rancher/rke2/server/node-token` on vm2 and update the agent config
-- **Wrong server IP** — confirm `server: "https://172.16.0.11:9345"` (port **9345**, not 6443)
-- **Network issue** — `ping 172.16.0.11` from the worker; `curl -k https://172.16.0.11:9345/ping`
-
-### `scp` from vm1 to vm2 fails
-
-Ensure the SSH service is running on vm2:
-```bash
-# On vm2
-systemctl status sshd
-```
-
-Alternatively, copy the kubeconfig content manually: `cat /etc/rancher/rke2/rke2.yaml` on vm2, paste into `~/.kube/mgmt.kubeconfig` on vm1, then run the `sed` fix.
 
 ---
 
 ## Summary
 
-| Step | Command | Where |
+| Step | What happened | How |
 |---|---|---|
-| Create bootstrap | `nkp create bootstrap` | vm1 📺 |
-| Start control plane | `systemctl enable --now rke2-server` | vm2 |
-| Get join token | `cat /var/lib/rancher/rke2/server/node-token` | vm2 |
-| Join workers | `systemctl enable --now rke2-agent` | vm3–5 |
-| Copy kubeconfig | `scp root@172.16.0.11:/etc/rancher/rke2/rke2.yaml ~/.kube/mgmt.kubeconfig` | vm1 |
-| Fix server address | `sed -i 's/127.0.0.1/172.16.0.11/' ~/.kube/mgmt.kubeconfig` | vm1 |
-| Delete bootstrap | `nkp delete bootstrap` | vm1 📺 |
-| **Install Kommander** | `nkp install kommander --kubeconfig ~/.kube/mgmt.kubeconfig` | vm1 |
+| RKE2 server started | controlplane booted | `systemctl enable rke2-server` in rootfs |
+| Workers joined | worker-01/02/03 booted | `systemctl enable rke2-agent` + baked config |
+| Kubeconfig pivoted | `cluster-pivot.service` ran on bootstrap | Automatic — polls until 4 nodes Ready |
+| Bootstrap Cluster | **You** created and deleted it | `nkp create bootstrap` / `nkp delete bootstrap` |
 
 ---
 
 ## Next steps
 
-➡️ [Lesson 07 — Node Operations: drain, cordon, taints](../2.lesson-node-operations/unit-1.md)
+➡️ [Lesson 4.2 — Node Operations: drain, cordon, taints](../2.lesson-node-operations/unit-1.md)
