@@ -302,21 +302,23 @@ cd rootfs && make controlplane worker
 
 All Rocky VMs fail `RootfsBaked` at the **exact same nanosecond** — this is a deterministic pre-scan rejection at the OCI layer level, not a per-file scan. The bake tool inspects the image before extracting it. Any of the four constructs above triggers immediate rejection of the entire image.
 
-### Current image state (last updated: commit 3544193)
+### Current image state (last updated: commit ac6b8d9)
 
 | Image | Tag | Size | Hardlinks | Dangling symlinks | sshd | check-bake.sh | Live bake |
 |---|---|---|---|---|---|---|---|
-| `nkp-bootstrap` | `v2.17.1-r2` | 1277 MB | ✓ 0 | ✓ 0 | ✓ | ✅ PASS | ✅ RUNNING — `nkp create bootstrap` verified, all 26 CAPI pods Running |
-| `nkp-controlplane` | `latest` | 859 MB | ✓ 0 | ✓ 0 | ✓ | ✅ PASS | ✅ RUNNING — RKE2 server Ready, 2.7 GiB available |
-| `nkp-worker` | `latest` | 802 MB | ✓ 0 | ✓ 0 | ✓ | ✅ PASS | ✅ RUNNING |
+| `nkp-bootstrap` | `v2.17.1-r5` | ~1300 MB | ✓ 0 | ✓ 0 | ✓ | ✅ PASS | ✅ RUNNING — cluster-pivot.service auto-pivots kubeconfig in ~100s |
+| `nkp-controlplane` | `latest` | 859 MB | ✓ 0 | ✓ 0 | ✓ | ✅ PASS | ✅ RUNNING — rke2-server enabled, auto-starts at boot |
+| `nkp-worker` | `latest` | 802 MB | ✓ 0 | ✓ 0 | ✓ | ✅ PASS | ✅ RUNNING — rke2-agent enabled, auto-joins at boot |
 | `konvoy-bootstrap` | `v2.17.1` | 2.37 GB | — | — | — | — | ✅ on GHCR — pulled by nkp-preload-images.service at boot |
 
-**Playground resource limits (confirmed against iximious Flexbox free tier):**
+**Playground auto-start behaviour (confirmed live):**
 - Total vCPU cap: **10** → vm1=2, vm2=2, workers=2+2+2
 - Total RAM cap: **16 GiB** → vm1=4Gi, vm2=4Gi, workers=2+2+2 Gi (14 GiB total)
-- vm1 memory at rest after `nkp create bootstrap`: 2.2 GiB used / 1.7 GiB available ✅
-- vm2 memory after RKE2 server start: 1.2 GiB used / 2.7 GiB available ✅
-- `nkp create bootstrap` timing: image loads from Docker cache (via GHCR preload) — no Docker Hub pull
+- `rke2-server` starts automatically on controlplane at boot
+- `rke2-agent` starts automatically on all workers at boot (token + server URL baked in)
+- `cluster-pivot.service` on bootstrap polls until 4 nodes Ready, copies kubeconfig → **kubectl works with no student action**
+- Time from playground start to `kubectl get nodes` showing 4 Ready nodes: **~2 minutes**
+- Playgrounds are ephemeral-safe: every Tier 3 lesson works independently
 
 ## Conventions
 
