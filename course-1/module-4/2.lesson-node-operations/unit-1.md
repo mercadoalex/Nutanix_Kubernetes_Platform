@@ -42,10 +42,10 @@ vm5  172.16.0.14   worker-03
 
 ::image-box
 ---
-:src: __static__/placeholder-kubectl-drain-output.png
-:alt: 'kubectl drain vm4 terminal output showing pods being evicted one by one with ignore-daemonsets flag'
+:src: __static__/kubectl-drain-v1.png
+:alt: 'kubectl drain worker-03 terminal output showing pods being evicted one by one with ignore-daemonsets flag'
 ---
-_TODO: Replace with actual screenshot — Run `kubectl drain vm4 --ignore-daemonsets --delete-emptydir-data` and capture the full terminal output showing each pod eviction line and the final "node/vm4 drained" confirmation_
+_⚠️ Placeholder — replace with real playground screenshot before course launch._
 ::
 
 ### 1.1 Deploy a test workload spread across workers
