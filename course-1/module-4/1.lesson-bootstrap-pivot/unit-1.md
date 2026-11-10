@@ -368,10 +368,10 @@ NKP is the management layer on top: **Kommander** (multi-cluster dashboard + Git
 
 `nkp install kommander` installs all of this into your existing cluster. No Bootstrap Cluster needed.
 
-> 📺 **Demo note** — The Bootstrap Cluster step (Part 1) was shown as a walkthrough because
-> the lab micro-VMs do not have enough RAM to run `nkp create bootstrap` (kind + 15 CAPI controllers
-> require 8 GB minimum). The `nkp install kommander` step below runs directly against vm2 and
-> works fine within the lab constraints.
+> ℹ️ **Lab note** — The Bootstrap Cluster step (Part 1) runs interactively in this lab.
+> `nkp create bootstrap` fits within the 4 GiB vm1 allocation (validated: 2.2 GiB used,
+> 1.7 GiB headroom after all 26 CAPI pods are Running). The `nkp install kommander` step
+> below runs directly against the Management Cluster on vm2.
 
 ### 5.1 Verify prerequisites
 
