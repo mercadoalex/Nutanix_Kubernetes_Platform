@@ -96,8 +96,8 @@ RUN ssh-keygen -A \
 
 # ── lab SSH authorized key (for cluster-pivot.service on bootstrap) ───────────
 # Allows laborant@bootstrap to SSH as root into controlplane without a password.
-# This is a lab-only key — ephemeral playgrounds only.
-COPY rootfs/bootstrap/ssh-keys/lab_key.pub /tmp/lab_key.pub
+# lab_key.pub is copied to controlplane/ so it's within the rootfs/ build context.
+COPY controlplane/lab_key.pub /tmp/lab_key.pub
 RUN mkdir -p /root/.ssh \
     && cat /tmp/lab_key.pub >> /root/.ssh/authorized_keys \
     && chmod 700 /root/.ssh \
