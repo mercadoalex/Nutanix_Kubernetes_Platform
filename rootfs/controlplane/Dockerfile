@@ -94,6 +94,16 @@ RUN ssh-keygen -A \
     && ln -sf /usr/lib/systemd/system/sshd.service \
         /etc/systemd/system/multi-user.target.wants/sshd.service
 
+# ── lab SSH authorized key (for cluster-pivot.service on bootstrap) ───────────
+# Allows laborant@bootstrap to SSH as root into controlplane without a password.
+# This is a lab-only key — ephemeral playgrounds only.
+COPY rootfs/bootstrap/ssh-keys/lab_key.pub /tmp/lab_key.pub
+RUN mkdir -p /root/.ssh \
+    && cat /tmp/lab_key.pub >> /root/.ssh/authorized_keys \
+    && chmod 700 /root/.ssh \
+    && chmod 600 /root/.ssh/authorized_keys \
+    && rm /tmp/lab_key.pub
+
 # ── RKE2 server config + autostart ───────────────────────────────────────────
 # Token is baked in so workers can join automatically at boot.
 # rke2-server is enabled so the cluster starts without student intervention —

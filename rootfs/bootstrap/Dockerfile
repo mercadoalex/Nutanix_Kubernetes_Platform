@@ -150,6 +150,19 @@ RUN printf '[Unit]\nDescription=Pre-pull konvoy-bootstrap image from GHCR\nAfter
 # until all 4 nodes are Ready, then copies the kubeconfig and fixes the server IP.
 # After this service completes, 'kubectl get nodes' works for laborant automatically.
 # Students can watch progress: journalctl -u cluster-pivot.service -f
+# ── SSH keypair for inter-VM communication (cluster-pivot) ───────────────────
+# The private key is installed for laborant; the matching public key is baked
+# into the controlplane and worker rootfs images under root's authorized_keys.
+# This is a lab-only key — ephemeral playgrounds only, not production.
+COPY rootfs/bootstrap/ssh-keys/lab_key     /home/laborant/.ssh/lab_key
+COPY rootfs/bootstrap/ssh-keys/lab_key.pub /home/laborant/.ssh/lab_key.pub
+RUN chmod 700 /home/laborant/.ssh \
+    && chmod 600 /home/laborant/.ssh/lab_key \
+    && chmod 644 /home/laborant/.ssh/lab_key.pub \
+    && echo "IdentityFile ~/.ssh/lab_key" >> /home/laborant/.ssh/config \
+    && echo "StrictHostKeyChecking no"   >> /home/laborant/.ssh/config \
+    && chmod 600 /home/laborant/.ssh/config
+
 COPY rootfs/bootstrap/cluster-pivot.sh /usr/local/bin/cluster-pivot.sh
 RUN chmod +x /usr/local/bin/cluster-pivot.sh \
     && printf '[Unit]\nDescription=Auto-pivot kubeconfig once RKE2 cluster is Ready\nAfter=network-online.target\nWants=network-online.target\n\n[Service]\nType=oneshot\nRemainAfterExit=yes\nUser=laborant\nExecStart=/usr/local/bin/cluster-pivot.sh\nStandardOutput=journal\nStandardError=journal\n\n[Install]\nWantedBy=multi-user.target\n' \

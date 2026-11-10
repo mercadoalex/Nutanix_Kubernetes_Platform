@@ -16,15 +16,15 @@ KUBECONFIG_PATH="${KUBECONFIG_DIR}/mgmt.kubeconfig"
 MAX_WAIT=300   # 5 minutes max
 INTERVAL=10
 
+# SSH options — key-based auth (lab_key baked into both rootfs images)
+SSH_OPTS="-o StrictHostKeyChecking=no -o ConnectTimeout=5 -i /home/laborant/.ssh/lab_key"
+
 log() { echo "[cluster-pivot] $*"; }
 
 # ── wait for SSH to be available on controlplane ──────────────────────────────
 log "Waiting for controlplane SSH..."
 elapsed=0
-while ! ssh -o StrictHostKeyChecking=no \
-             -o ConnectTimeout=5 \
-             -o BatchMode=yes \
-             root@${CONTROL_PLANE_IP} true 2>/dev/null; do
+while ! ssh ${SSH_OPTS} root@${CONTROL_PLANE_IP} true 2>/dev/null; do
     sleep ${INTERVAL}
     elapsed=$((elapsed + INTERVAL))
     if [ ${elapsed} -ge ${MAX_WAIT} ]; then
@@ -38,10 +38,8 @@ log "controlplane SSH ready"
 # ── wait for RKE2 server to write its kubeconfig ─────────────────────────────
 log "Waiting for RKE2 kubeconfig on controlplane..."
 elapsed=0
-while ! ssh -o StrictHostKeyChecking=no \
-             -o BatchMode=yes \
-             root@${CONTROL_PLANE_IP} \
-             'test -f /etc/rancher/rke2/rke2.yaml' 2>/dev/null; do
+while ! ssh ${SSH_OPTS} root@${CONTROL_PLANE_IP} \
+        'test -f /etc/rancher/rke2/rke2.yaml' 2>/dev/null; do
     sleep ${INTERVAL}
     elapsed=$((elapsed + INTERVAL))
     if [ ${elapsed} -ge ${MAX_WAIT} ]; then
@@ -54,7 +52,7 @@ log "RKE2 kubeconfig ready"
 
 # ── copy kubeconfig and fix server address ────────────────────────────────────
 mkdir -p "${KUBECONFIG_DIR}"
-scp -o StrictHostKeyChecking=no \
+scp ${SSH_OPTS} \
     root@${CONTROL_PLANE_IP}:/etc/rancher/rke2/rke2.yaml \
     "${KUBECONFIG_PATH}"
 sed -i "s/127.0.0.1/${CONTROL_PLANE_IP}/" "${KUBECONFIG_PATH}"
