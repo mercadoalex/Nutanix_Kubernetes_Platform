@@ -1,31 +1,23 @@
-# RKE2 server default config for the NKP lab control plane (vm2)
+# RKE2 server config for the NKP lab control plane (vm2 / controlplane)
 # /etc/rancher/rke2/config.yaml
 #
-# token: set at runtime — students run:
-#   echo "MY_SHARED_TOKEN" > /etc/rancher/rke2/config.yaml-token
-# or export TOKEN before starting the service.
-#
-# The tls-san entries cover both the static IP and the hostname used
-# across the Flexbox playground subnet.
+# Token is fixed so workers can join automatically at boot without
+# any manual intervention. Students do NOT need to set this themselves.
 
-# Cluster token — override at runtime with a strong value
-# token: "changeme-set-at-runtime"
+# Fixed cluster token — shared with all worker nodes in the rootfs build
+token: "nkp-lab-token-2024"
 
-# Advertise the static control-plane IP so worker nodes can reach the API
-# node-ip: "172.16.0.11"   # set by lab setup script
-
-# TLS SANs — add all IPs/hostnames that nodes use to reach the API server
+# TLS SANs — covers the static Flexbox IP and the VM hostname
 tls-san:
   - "172.16.0.11"
-  - "vm2"
+  - "controlplane"
 
 # CNI — Cilium (NKP default)
 cni: cilium
 
-# Disable the default Traefik and ServiceLB (we deploy MetalLB separately)
-# and the rke2 built-in nginx ingress in favour of Traefik HelmRelease
+# Disable the rke2 built-in nginx ingress
 disable:
   - rke2-ingress-nginx
 
-# Write kubeconfig with world-readable permissions so laborant user can read it
+# Write kubeconfig world-readable so laborant user can read it without sudo
 write-kubeconfig-mode: "0644"

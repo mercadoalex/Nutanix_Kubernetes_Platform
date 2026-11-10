@@ -94,11 +94,13 @@ RUN ssh-keygen -A \
     && ln -sf /usr/lib/systemd/system/sshd.service \
         /etc/systemd/system/multi-user.target.wants/sshd.service
 
-# ── RKE2 server config ────────────────────────────────────────────────────────
-# Writes the default server config. The token is set at runtime by the lab
-# setup script (or manually by the student) so VMs can join the cluster.
+# ── RKE2 server config + autostart ───────────────────────────────────────────
+# Token is baked in so workers can join automatically at boot.
+# rke2-server is enabled so the cluster starts without student intervention —
+# each lesson that needs a running cluster gets it automatically.
 RUN mkdir -p /etc/rancher/rke2
 COPY controlplane/config-server.yaml /etc/rancher/rke2/config.yaml
+RUN systemctl enable rke2-server
 
 # ── shell setup ───────────────────────────────────────────────────────────────
 # RKE2 writes its kubeconfig to /etc/rancher/rke2/rke2.yaml after first start.

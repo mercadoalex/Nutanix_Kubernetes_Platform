@@ -82,9 +82,10 @@ RUN ssh-keygen -A \
         /etc/systemd/system/multi-user.target.wants/sshd.service
 
 # ── RKE2 agent config ─────────────────────────────────────────────────────────
-# server URL and token are set at runtime by the student (or lab setup script)
+# Server URL and token are baked in — worker joins the cluster automatically at boot.
 RUN mkdir -p /etc/rancher/rke2
 COPY worker/config-agent.yaml /etc/rancher/rke2/config.yaml
+RUN systemctl enable rke2-agent
 
 # ── shell setup ───────────────────────────────────────────────────────────────
 RUN echo 'export PATH=$PATH:/var/lib/rancher/rke2/bin' >> /etc/bashrc \

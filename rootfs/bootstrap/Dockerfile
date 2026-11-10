@@ -145,6 +145,17 @@ RUN printf '[Unit]\nDescription=Pre-pull konvoy-bootstrap image from GHCR\nAfter
         > /etc/systemd/system/nkp-preload-images.service \
     && systemctl enable nkp-preload-images.service
 
+# ── cluster-pivot.service — auto-pivot once RKE2 cluster is Ready ─────────────
+# Runs after docker.service (needs SSH client). Polls the controlplane every 10s
+# until all 4 nodes are Ready, then copies the kubeconfig and fixes the server IP.
+# After this service completes, 'kubectl get nodes' works for laborant automatically.
+# Students can watch progress: journalctl -u cluster-pivot.service -f
+COPY bootstrap/cluster-pivot.sh /usr/local/bin/cluster-pivot.sh
+RUN chmod +x /usr/local/bin/cluster-pivot.sh \
+    && printf '[Unit]\nDescription=Auto-pivot kubeconfig once RKE2 cluster is Ready\nAfter=network-online.target\nWants=network-online.target\n\n[Service]\nType=oneshot\nRemainAfterExit=yes\nUser=laborant\nExecStart=/usr/local/bin/cluster-pivot.sh\nStandardOutput=journal\nStandardError=journal\n\n[Install]\nWantedBy=multi-user.target\n' \
+        > /etc/systemd/system/cluster-pivot.service \
+    && systemctl enable cluster-pivot.service
+
 # ── shell setup ───────────────────────────────────────────────────────────────
 RUN echo 'source <(kubectl completion bash)'                      >> /etc/bash.bashrc \
     && echo 'source <(nkp completion bash)'                       >> /etc/bash.bashrc \
