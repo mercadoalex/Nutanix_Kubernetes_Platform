@@ -64,7 +64,8 @@ log "Waiting for 4 nodes Ready..."
 elapsed=0
 while true; do
     READY=$(kubectl --kubeconfig="${KUBECONFIG_PATH}" get nodes \
-            --no-headers 2>/dev/null | grep -c ' Ready ' || echo 0)
+            --no-headers 2>/dev/null | grep -c ' Ready ' || true)
+    READY=${READY:-0}
     if [ "${READY}" -ge 4 ]; then
         log "All 4 nodes Ready ✓"
         break

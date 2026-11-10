@@ -153,14 +153,14 @@ RUN chmod +x /usr/local/bin/cluster-pivot.sh \
     && systemctl enable cluster-pivot.service
 
 # ── shell setup ───────────────────────────────────────────────────────────────
-RUN echo 'source <(kubectl completion bash)'                      >> /etc/bash.bashrc \
-    && echo 'source <(nkp completion bash)'                       >> /etc/bash.bashrc \
-    && echo 'source <(helm completion bash)'                      >> /etc/bash.bashrc \
-    && echo 'alias k=kubectl'                                     >> /etc/bash.bashrc \
-    && echo '# Use mgmt.kubeconfig when present (post-pivot)'     >> /etc/bash.bashrc \
-    && echo 'if [ -f "$HOME/.kube/mgmt.kubeconfig" ]; then'       >> /etc/bash.bashrc \
-    && echo '  export KUBECONFIG="$HOME/.kube/mgmt.kubeconfig"'   >> /etc/bash.bashrc \
-    && echo 'fi'                                                   >> /etc/bash.bashrc
+# KUBECONFIG in /etc/environment applies to ALL shells (interactive, non-interactive,
+# and new terminals opened by the playground UI) — not just login shells.
+# The path is fixed: cluster-pivot.service always writes to this location.
+RUN echo 'KUBECONFIG=/home/laborant/.kube/mgmt.kubeconfig'        >> /etc/environment \
+    && echo 'source <(kubectl completion bash)'                    >> /etc/bash.bashrc \
+    && echo 'source <(nkp completion bash)'                        >> /etc/bash.bashrc \
+    && echo 'source <(helm completion bash)'                       >> /etc/bash.bashrc \
+    && echo 'alias k=kubectl'                                      >> /etc/bash.bashrc
 
 # ── laborant user (required by iximiuz platform) ─────────────────────────────
 # Ubuntu 24.04 ships with an 'ubuntu' user at UID 1000. Rename it to 'laborant'
