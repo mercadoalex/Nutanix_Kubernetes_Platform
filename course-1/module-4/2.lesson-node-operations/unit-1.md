@@ -30,10 +30,10 @@ All commands run from **vm1** against the live cluster.
 ## Lab topology reminder
 
 ```
-vm2  172.16.0.11   control plane
-vm3  172.16.0.12   worker-01
-vm4  172.16.0.13   worker-02
-vm5  172.16.0.14   worker-03
+controlplane  172.16.0.11   control plane
+worker-01     172.16.0.12   worker node 1
+worker-02     172.16.0.13   worker node 2
+worker-03     172.16.0.14   worker node 3
 ```
 
 ---
@@ -55,39 +55,39 @@ kubectl create deployment drain-test --image=nginx:alpine --replicas=6
 kubectl get pods -l app=drain-test -o wide
 ```
 
-Confirm pods are spread across vm3, vm4, and vm5.
+Confirm pods are spread across worker-01, worker-02, and worker-03.
 
-### 1.2 Cordon vm4
+### 1.2 Cordon worker-02
 
 Cordoning marks a node **unschedulable** — the scheduler will not place new pods on it. Existing pods are not evicted.
 
 ```bash
-kubectl cordon vm4
+kubectl cordon worker-02
 kubectl get nodes
 ```
 
 ```
-NAME   STATUS                     ROLES                       AGE
-vm2    Ready                      control-plane,etcd,master   1h
-vm3    Ready                      <none>                      1h
-vm4    Ready,SchedulingDisabled   <none>                      1h
-vm5    Ready                      <none>                      1h
+NAME           STATUS                     ROLES                       AGE
+controlplane   Ready                      control-plane,etcd           1h
+worker-01      Ready                      <none>                       1h
+worker-02      Ready,SchedulingDisabled   <none>                       1h
+worker-03      Ready                      <none>                       1h
 ```
 
-`SchedulingDisabled` — vm4 is cordoned. Existing pods on vm4 are still running.
+`SchedulingDisabled` — worker-02 is cordoned. Existing pods on worker-02 are still running.
 
 ```bash
 kubectl get pods -l app=drain-test -o wide
 ```
 
-Pods on vm4 are untouched. Only new pods are blocked from landing there.
+Pods on worker-02 are untouched. Only new pods are blocked from landing there.
 
-### 1.3 Drain vm4
+### 1.3 Drain worker-02
 
 Drain evicts all non-daemonset, non-mirror pods from a node gracefully. Each pod is given a chance to terminate cleanly before it is killed.
 
 ```bash
-kubectl drain vm4 \
+kubectl drain worker-02 \
     --ignore-daemonsets \
     --delete-emptydir-data
 ```
@@ -101,7 +101,7 @@ Watch pods reschedule in real time in a second terminal:
 kubectl get pods -l app=drain-test -o wide -w
 ```
 
-Pods that were on vm4 are terminated and rescheduled onto vm3 and vm5.
+Pods that were on worker-02 are terminated and rescheduled onto worker-01 and worker-03.
 
 ### 1.4 Verify
 
@@ -109,34 +109,34 @@ Pods that were on vm4 are terminated and rescheduled onto vm3 and vm5.
 kubectl get pods -l app=drain-test -o wide
 ```
 
-No pods on vm4. vm3 and vm5 carry the full 6 replicas.
+No pods on worker-02. worker-01 and worker-03 carry the full 6 replicas.
 
 ### 1.5 Perform maintenance (simulated)
 
 ```bash
-# On vm4 — simulate an OS patch
-echo "Patching vm4..."
+# On worker-02 — simulate an OS patch
+echo "Patching worker-02..."
 sleep 5
 echo "Done"
 ```
 
-### 1.6 Uncordon vm4
+### 1.6 Uncordon worker-02
 
 ```bash
-kubectl uncordon vm4
+kubectl uncordon worker-02
 kubectl get nodes
 ```
 
-vm4 returns to `Ready`. The scheduler can now place new pods on it again.
+worker-02 returns to `Ready`. The scheduler can now place new pods on it again.
 
-Scale the deployment up to trigger rescheduling onto vm4:
+Scale the deployment up to trigger rescheduling onto worker-02:
 
 ```bash
 kubectl scale deployment drain-test --replicas=9
 kubectl get pods -l app=drain-test -o wide
 ```
 
-New pods land on vm4.
+New pods land on worker-02.
 
 ### 1.7 Clean up
 
@@ -165,7 +165,7 @@ _TODO: Replace with actual screenshot — After `kubectl cordon vm4`, run `kubec
 ### 2.1 Taint a node
 
 ```bash
-kubectl taint node vm5 dedicated=gpu:NoSchedule
+kubectl taint node worker-03 dedicated=gpu:NoSchedule
 ```
 
 Format: `key=value:effect`
@@ -179,7 +179,7 @@ Format: `key=value:effect`
 ### 2.2 Verify the taint is applied
 
 ```bash
-kubectl describe node vm5 | grep -A5 Taints
+kubectl describe node worker-03 | grep -A5 Taints
 ```
 
 ```
@@ -193,7 +193,7 @@ kubectl create deployment no-toleration --image=nginx:alpine --replicas=9
 kubectl get pods -l app=no-toleration -o wide
 ```
 
-No pods land on vm5 — they all go to vm3 and vm4. vm5 is reserved.
+No pods land on worker-03 — they all go to worker-01 and worker-02. worker-03 is reserved.
 
 ### 2.4 Deploy with a toleration
 
@@ -234,23 +234,23 @@ These pods **can** land on vm5. They may also land on vm3/vm4 — tolerations al
 
 ```bash
 kubectl patch deployment with-toleration --type=json -p='[
-  {"op":"add","path":"/spec/template/spec/nodeSelector","value":{"kubernetes.io/hostname":"vm5"}}
+  {"op":"add","path":"/spec/template/spec/nodeSelector","value":{"kubernetes.io/hostname":"worker-03"}}
 ]'
 kubectl get pods -l app=with-toleration -o wide
 ```
 
-All pods now run exclusively on vm5.
+All pods now run exclusively on worker-03.
 
 ### 2.6 Remove the taint
 
 ```bash
-kubectl taint node vm5 dedicated=gpu:NoSchedule-
+kubectl taint node worker-03 dedicated=gpu:NoSchedule-
 ```
 
 The trailing `-` removes the taint.
 
 ```bash
-kubectl describe node vm5 | grep Taints
+kubectl describe node worker-03 | grep Taints
 ```
 
 ```
@@ -314,7 +314,7 @@ pdb-app   3               N/A               1                     5s
 ### 3.3 Test drain with PDB active
 
 ```bash
-kubectl drain vm3 --ignore-daemonsets --delete-emptydir-data
+kubectl drain worker-01 --ignore-daemonsets --delete-emptydir-data
 ```
 
 The drain proceeds but respects the PDB — it evicts one pod at a time, waiting for it to reschedule before evicting the next. If the PDB would be violated, drain blocks and waits.
@@ -322,7 +322,7 @@ The drain proceeds but respects the PDB — it evicts one pod at a time, waiting
 ### 3.4 Uncordon and clean up
 
 ```bash
-kubectl uncordon vm3
+kubectl uncordon worker-01
 kubectl delete deployment pdb-app
 kubectl delete pdb pdb-app
 ```
