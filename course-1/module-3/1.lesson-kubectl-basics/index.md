@@ -17,7 +17,7 @@ tagz:
   - events
   - troubleshooting
 playground:
-  name: nkp-lab-single
+  name: nkp-lab-single-93d0de4d
 tasks:
   verify_kubectl_works:
     machine: bootstrap

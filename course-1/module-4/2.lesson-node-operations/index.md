@@ -18,7 +18,7 @@ tagz:
   - tolerations
   - pdb
 playground:
-  name: nkp-lab
+  name: nkp-lab-4a779bbb
 tasks:
   verify_node_cordoned:
     machine: bootstrap

@@ -20,7 +20,7 @@ tagz:
   - hubble
   - network-policy
 playground:
-  name: nkp-lab
+  name: nkp-lab-4a779bbb
 tasks:
   verify_cilium_status:
     machine: bootstrap

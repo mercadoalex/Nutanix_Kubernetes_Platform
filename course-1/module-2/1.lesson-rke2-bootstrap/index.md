@@ -16,7 +16,7 @@ tagz:
   - etcd
   - kubeconfig
 playground:
-  name: nkp-lab-2vm
+  name: nkp-lab-2vm-72289ab1
 tasks:
   verify_rke2_running:
     machine: controlplane

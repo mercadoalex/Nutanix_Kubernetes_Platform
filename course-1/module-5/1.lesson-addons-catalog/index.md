@@ -18,7 +18,7 @@ tagz:
   - longhorn
   - storage
 playground:
-  name: nkp-lab
+  name: nkp-lab-4a779bbb
 tasks:
   verify_flux_running:
     machine: bootstrap

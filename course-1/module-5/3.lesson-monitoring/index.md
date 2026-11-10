@@ -19,7 +19,7 @@ tagz:
   - promql
   - monitoring
 playground:
-  name: nkp-lab
+  name: nkp-lab-4a779bbb
 tasks:
   verify_prometheus_running:
     machine: bootstrap
