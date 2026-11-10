@@ -146,10 +146,14 @@ RUN printf '[Unit]\nDescription=Pre-pull konvoy-bootstrap image from GHCR\nAfter
     && systemctl enable nkp-preload-images.service
 
 # ── shell setup ───────────────────────────────────────────────────────────────
-RUN echo 'source <(kubectl completion bash)' >> /etc/bash.bashrc \
-    && echo 'source <(nkp completion bash)'  >> /etc/bash.bashrc \
-    && echo 'source <(helm completion bash)' >> /etc/bash.bashrc \
-    && echo 'alias k=kubectl'               >> /etc/bash.bashrc
+RUN echo 'source <(kubectl completion bash)'                      >> /etc/bash.bashrc \
+    && echo 'source <(nkp completion bash)'                       >> /etc/bash.bashrc \
+    && echo 'source <(helm completion bash)'                      >> /etc/bash.bashrc \
+    && echo 'alias k=kubectl'                                     >> /etc/bash.bashrc \
+    && echo '# Use mgmt.kubeconfig when present (post-pivot)'     >> /etc/bash.bashrc \
+    && echo 'if [ -f "$HOME/.kube/mgmt.kubeconfig" ]; then'       >> /etc/bash.bashrc \
+    && echo '  export KUBECONFIG="$HOME/.kube/mgmt.kubeconfig"'   >> /etc/bash.bashrc \
+    && echo 'fi'                                                   >> /etc/bash.bashrc
 
 # ── laborant user (required by iximiuz platform) ─────────────────────────────
 # Ubuntu 24.04 ships with an 'ubuntu' user at UID 1000. Rename it to 'laborant'
