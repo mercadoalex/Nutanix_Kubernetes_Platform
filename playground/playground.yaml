@@ -22,7 +22,7 @@ playground:
                 default: true
           drives:
               - mount: /
-                source: oci://ghcr.io/mercadoalex/nkp-bootstrap:v2.17.1-r5
+                source: oci://ghcr.io/mercadoalex/nkp-bootstrap:v2.17.1-r6
                 size: 20Gi
           network:
               interfaces:
